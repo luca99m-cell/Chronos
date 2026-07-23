@@ -5274,18 +5274,35 @@
     try{
       const res = await fetch(UPDATE_VERSION_URL, { cache: 'no-store' });
       if(!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      const remoteVersion = data && data.version;
-      if(remoteVersion && isNewerVersion(remoteVersion, APP_VERSION)){
+      const rawText = await res.text();
+      let data;
+      try{
+        data = JSON.parse(rawText);
+      }catch(parseErr){
+        console.warn('Update-Prüfung: version.json ist kein gültiges JSON. Inhalt:', rawText);
+        throw new Error('Ungültiges JSON in version.json');
+      }
+      // Toleriert abweichende Schreibweisen (Version/VERSION) und ein optionales "v"-Präfix (v2.8.0)
+      const rawVersion = data && (data.version ?? data.Version ?? data.VERSION);
+      const remoteVersion = rawVersion ? String(rawVersion).trim().replace(/^v/i, '') : '';
+      if(!remoteVersion){
+        console.warn('Update-Prüfung: Kein Feld "version" in version.json gefunden. Erhaltener Inhalt:', data);
+        if(showFeedback){
+          showToast('version.json enthält kein gültiges Feld "version" – bitte Format prüfen.');
+        }
+        return;
+      }
+      if(isNewerVersion(remoteVersion, APP_VERSION)){
         el('updateBannerVersion').textContent = 'v' + remoteVersion;
         el('updateBanner').style.display = 'flex';
         if(showFeedback) showToast('Neue Version gefunden: v' + remoteVersion);
       } else if(showFeedback){
-        showToast('Du nutzt bereits die neueste Version (v' + APP_VERSION + ').');
+        showToast(`Du nutzt bereits die neueste Version (lokal v${APP_VERSION}, GitHub meldet v${remoteVersion}).`);
       }
     }catch(e){
+      console.warn('Update-Prüfung fehlgeschlagen:', e);
       if(showFeedback){
-        showToast('Update-Prüfung fehlgeschlagen (offline oder GitHub nicht erreichbar).');
+        showToast('Update-Prüfung fehlgeschlagen (offline, GitHub nicht erreichbar oder version.json fehlerhaft).');
       }
       // Beim stillen Start-Check keine Fehlermeldung - soll nicht aufdringlich sein
     }
