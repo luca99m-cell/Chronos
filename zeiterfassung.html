@@ -173,6 +173,21 @@
     flex-shrink:0;
   }
   .version-badge:hover{background:var(--btn-ghost-hover);color:var(--text);}
+
+  #updateBanner{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:12px;
+    background:var(--accent-tint-bg);
+    border-bottom:1px solid var(--accent-tint-border);
+    color:var(--primary-dark);
+    padding:10px 20px;
+    font-size:13.5px;
+  }
+  .update-banner-actions{display:flex;gap:8px;}
+  .update-banner-actions button{padding:7px 14px;font-size:12.5px;}
   .status{
     display:flex;
     align-items:center;
@@ -1335,6 +1350,14 @@
   </div>
 </header>
 
+<div id="updateBanner" style="display:none;">
+  <span>🚀 Neue Version verfügbar: <strong id="updateBannerVersion"></strong></span>
+  <div class="update-banner-actions">
+    <button type="button" class="btn-primary" id="updateDownloadBtn">Herunterladen</button>
+    <button type="button" class="btn-ghost" id="updateDismissBtn">Später</button>
+  </div>
+</div>
+
 <main id="app">
   <div class="card" id="formCard">
     <form id="entryForm" autocomplete="off">
@@ -1677,11 +1700,13 @@
 
     <div class="about-section">
       <h4 style="margin-top:0;border-top:none;padding-top:0;">ℹ️ Über Chronos</h4>
-      <p style="margin-bottom:8px;">Version <strong>2.6.0</strong> · Zuletzt geändert: 23.07.2026</p>
+      <p style="margin-bottom:8px;">Version <strong id="aboutVersionText">2.6.0</strong> · Zuletzt geändert: 23.07.2026</p>
+      <button type="button" class="btn-ghost" id="checkUpdateBtn" style="width:100%;margin-bottom:10px;">🔄 Nach Updates suchen</button>
       <details>
         <summary>Was ist neu? (Verlauf anzeigen)</summary>
         <ul class="changelog-list">
-          <li><strong>2.6.0</strong> – Versionsanzeige</li>
+          <li><strong>2.8.0</strong> – Testversion für die Update-Prüfung</li>
+          <li><strong>2.6.0</strong> – Versionsanzeige, Update-Prüfung über GitHub</li>
           <li><strong>2.5.0</strong> – Kalenderwoche-Ansicht, Trendpfeil, Tages-Diagramm für Woche/Monat</li>
           <li><strong>2.4.0</strong> – Entwürfe-Verwaltung, verbrauchte Gegenstände, Info-Tooltips an mehreren Feldern</li>
           <li><strong>2.3.0</strong> – Große Detail-Ansicht für Einträge, wählbares Tabellen-Design (klassisch/gruppiert)</li>
@@ -1869,6 +1894,10 @@
   const CUSTOM_BG_KEY = 'customBackgroundColor';
   const CUSTOM_BG_IMAGE_KEY = 'customBackgroundImage';
   const TIMER_KEY = 'runningTimerStart';
+
+  const APP_VERSION = '2.8.0';
+  const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
+  const UPDATE_HTML_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/zeiterfassung.html';
 
   let fileHandle = null;
   let entries = [];
@@ -5224,6 +5253,82 @@
     });
   })();
 
+  // ---------- Update-Prüfung (über GitHub) ----------
+  // Vergleicht Versionsnummern nach dem Schema x.y.z (kein reiner String-Vergleich,
+  // damit z.B. 2.10.0 korrekt als neuer als 2.9.0 erkannt wird).
+  function isNewerVersion(remote, local){
+    const r = String(remote).split('.').map(n => parseInt(n, 10) || 0);
+    const l = String(local).split('.').map(n => parseInt(n, 10) || 0);
+    for(let i = 0; i < Math.max(r.length, l.length); i++){
+      const rv = r[i] || 0, lv = l[i] || 0;
+      if(rv > lv) return true;
+      if(rv < lv) return false;
+    }
+    return false;
+  }
+
+  // showFeedback = true -> auch bei "kein Update" bzw. Fehler eine Rückmeldung zeigen
+  // (für den manuellen Button). Beim automatischen Check beim Start bleibt es still,
+  // falls nichts Neues da ist oder GitHub gerade nicht erreichbar ist.
+  async function checkForUpdate(showFeedback){
+    try{
+      const res = await fetch(UPDATE_VERSION_URL, { cache: 'no-store' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      const remoteVersion = data && data.version;
+      if(remoteVersion && isNewerVersion(remoteVersion, APP_VERSION)){
+        el('updateBannerVersion').textContent = 'v' + remoteVersion;
+        el('updateBanner').style.display = 'flex';
+        if(showFeedback) showToast('Neue Version gefunden: v' + remoteVersion);
+      } else if(showFeedback){
+        showToast('Du nutzt bereits die neueste Version (v' + APP_VERSION + ').');
+      }
+    }catch(e){
+      if(showFeedback){
+        showToast('Update-Prüfung fehlgeschlagen (offline oder GitHub nicht erreichbar).');
+      }
+      // Beim stillen Start-Check keine Fehlermeldung - soll nicht aufdringlich sein
+    }
+  }
+
+  el('checkUpdateBtn').addEventListener('click', ()=> checkForUpdate(true));
+
+  el('updateDismissBtn').addEventListener('click', ()=>{
+    el('updateBanner').style.display = 'none';
+  });
+
+  el('updateDownloadBtn').addEventListener('click', async ()=>{
+    const btn = el('updateDownloadBtn');
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Lädt...';
+    try{
+      const res = await fetch(UPDATE_HTML_URL, { cache: 'no-store' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const html = await res.text();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'zeiterfassung.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Neue Version heruntergeladen – damit die alte Datei ersetzen.');
+      el('updateBanner').style.display = 'none';
+    }catch(e){
+      alert('Download fehlgeschlagen. Du kannst die neue Version auch direkt bei GitHub herunterladen.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  });
+
+  // Angezeigte Versionsnummer aus der zentralen Konstante setzen (eine Quelle der Wahrheit)
+  el('versionBadge').textContent = 'v' + APP_VERSION;
+  el('aboutVersionText').textContent = APP_VERSION;
+
   // Wendet eine in der Datei gespeicherte Spaltenbreite an (falls vorhanden)
   function applySavedColumnWidth(){
     if(settings.formColumnWidth && window.innerWidth > 900){
@@ -5232,6 +5337,7 @@
   }
 
   init().catch(e => reportUnexpectedError('Initialisierung', e));
+  checkForUpdate(false); // stiller Check im Hintergrund, blockiert den Start nicht
 })();
 </script>
 </body>
