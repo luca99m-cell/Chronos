@@ -1105,6 +1105,17 @@
     line-height:1.7;
   }
   .changelog-list strong{color:var(--text);}
+  .update-target-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--table-header-bg);
+    border-radius:8px;
+    padding:9px 12px;
+    margin-bottom:12px;
+  }
+  .update-target-status{font-size:11px;color:var(--muted);margin-top:2px;}
   #settingsOverlay p, #importPasteOverlay p, #importReviewOverlay p, #importBulkReviewOverlay p{color:var(--muted);font-size:13.5px;line-height:1.5;margin-top:0;}
 
   #settingsOverlay .box.settings-box{max-width:820px;}
@@ -1353,7 +1364,7 @@
 <div id="updateBanner" style="display:none;">
   <span>🚀 Neue Version verfügbar: <strong id="updateBannerVersion"></strong></span>
   <div class="update-banner-actions">
-    <button type="button" class="btn-primary" id="updateDownloadBtn">Herunterladen</button>
+    <button type="button" class="btn-primary" id="updateDownloadBtn">Jetzt aktualisieren</button>
     <button type="button" class="btn-ghost" id="updateDismissBtn">Später</button>
   </div>
 </div>
@@ -1700,11 +1711,19 @@
 
     <div class="about-section">
       <h4 style="margin-top:0;border-top:none;padding-top:0;">ℹ️ Über Chronos</h4>
-      <p style="margin-bottom:8px;">Version <strong id="aboutVersionText">2.6.0</strong> · Zuletzt geändert: 23.07.2026</p>
+      <p style="margin-bottom:8px;">Version <strong id="aboutVersionText">2.6.0</strong> · Zuletzt geändert: 24.07.2026</p>
       <button type="button" class="btn-ghost" id="checkUpdateBtn" style="width:100%;margin-bottom:10px;">🔄 Nach Updates suchen</button>
+      <div class="update-target-row">
+        <div>
+          <strong style="font-size:12.5px;">Update-Ziel</strong>
+          <div class="update-target-status" id="updateTargetStatus">Wird geprüft…</div>
+        </div>
+        <button type="button" class="btn-ghost" id="setUpdateTargetBtn">📁 Festlegen/Ändern</button>
+      </div>
       <details>
         <summary>Was ist neu? (Verlauf anzeigen)</summary>
         <ul class="changelog-list">
+          <li><strong>2.8.1</strong> – Update-Ziel merken (kein erneuter Dateidialog nötig)</li>
           <li><strong>2.8.0</strong> – Testversion für die Update-Prüfung</li>
           <li><strong>2.6.0</strong> – Versionsanzeige, Update-Prüfung über GitHub</li>
           <li><strong>2.5.0</strong> – Kalenderwoche-Ansicht, Trendpfeil, Tages-Diagramm für Woche/Monat</li>
@@ -1895,9 +1914,10 @@
   const CUSTOM_BG_IMAGE_KEY = 'customBackgroundImage';
   const TIMER_KEY = 'runningTimerStart';
 
-  const APP_VERSION = '2.8.0';
+  const APP_VERSION = '2.8.1';
   const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
   const UPDATE_HTML_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/zeiterfassung.html';
+  const UPDATE_HANDLE_KEY = 'updateFileHandle';
 
   let fileHandle = null;
   let entries = [];
@@ -2682,6 +2702,7 @@
     el('settingVorname').value = settings.vorname || '';
     el('settingNachname').value = settings.nachname || '';
     refreshKuerzelPreview();
+    refreshUpdateTargetStatus().catch(()=>{});
     tempTaetigkeiten = Array.isArray(settings.taetigkeiten) ? settings.taetigkeiten.slice() : [];
     renderTaetigkeitenList();
     tempTemplates = Array.isArray(settings.templates) ? settings.templates.slice() : [];
@@ -5308,6 +5329,56 @@
     }
   }
 
+  // ---------- Update-Ziel (gemerkter Datei-Handle, damit nicht jedes Mal neu ausgewählt werden muss) ----------
+  async function getStoredUpdateHandle(){
+    try{
+      return await idbGet(UPDATE_HANDLE_KEY);
+    }catch(e){
+      return null;
+    }
+  }
+
+  async function setStoredUpdateHandle(handle){
+    try{
+      await idbSet(UPDATE_HANDLE_KEY, handle);
+    }catch(e){
+      console.warn('Update-Ziel konnte nicht gespeichert werden:', e);
+    }
+  }
+
+  async function refreshUpdateTargetStatus(){
+    const statusEl = el('updateTargetStatus');
+    if(!window.showSaveFilePicker){
+      statusEl.textContent = 'Dein Browser unterstützt das Merken eines Ziels nicht – jedes Mal Speicherort wählen.';
+      return;
+    }
+    const handle = await getStoredUpdateHandle();
+    if(handle && handle.name){
+      statusEl.textContent = `Aktuell: ${handle.name} (wird bei Updates automatisch überschrieben)`;
+    } else {
+      statusEl.textContent = 'Noch nicht festgelegt – beim nächsten Update wirst du einmalig gefragt.';
+    }
+  }
+
+  el('setUpdateTargetBtn').addEventListener('click', async ()=>{
+    if(!window.showSaveFilePicker){
+      alert('Dein Browser unterstützt diese Funktion nicht.');
+      return;
+    }
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'zeiterfassung.html',
+        types: [{ description: 'HTML-Datei', accept: { 'text/html': ['.html'] } }]
+      });
+      await setStoredUpdateHandle(handle);
+      await refreshUpdateTargetStatus();
+      showToast('Update-Ziel gespeichert. Künftige Updates schreiben direkt dorthin.');
+    }catch(e){
+      if(e && e.name === 'AbortError') return;
+      alert('Auswahl fehlgeschlagen: ' + e.message);
+    }
+  });
+
   el('checkUpdateBtn').addEventListener('click', ()=> checkForUpdate(true));
 
   el('updateDismissBtn').addEventListener('click', ()=>{
@@ -5323,6 +5394,49 @@
       const res = await fetch(UPDATE_HTML_URL, { cache: 'no-store' });
       if(!res.ok) throw new Error('HTTP ' + res.status);
       const html = await res.text();
+
+      // Bevorzugt: direkt in ein gemerktes Update-Ziel schreiben (kein Dialog nötig),
+      // sonst einmalig danach fragen und für künftige Updates merken.
+      if(window.showSaveFilePicker){
+        let handle = await getStoredUpdateHandle();
+        let usedStoredHandle = false;
+
+        if(handle){
+          const ok = await verifyPermission(handle, true);
+          if(ok){
+            usedStoredHandle = true;
+          } else {
+            handle = null; // Berechtigung verloren/entzogen -> neu auswählen lassen
+          }
+        }
+
+        if(!handle){
+          try{
+            handle = await window.showSaveFilePicker({
+              suggestedName: 'zeiterfassung.html',
+              types: [{ description: 'HTML-Datei', accept: { 'text/html': ['.html'] } }]
+            });
+          }catch(pickerErr){
+            if(pickerErr && pickerErr.name === 'AbortError'){
+              return; // Nutzer hat den Dialog abgebrochen - kein Fehler
+            }
+            throw pickerErr;
+          }
+          await setStoredUpdateHandle(handle); // für nächstes Mal merken
+        }
+
+        const writable = await handle.createWritable();
+        await writable.write(html);
+        await writable.close();
+        el('updateBanner').style.display = 'none';
+        showToast(usedStoredHandle
+          ? 'Automatisch aktualisiert! Bitte Chronos einmal neu laden.'
+          : 'Datei aktualisiert und Ziel für künftige Updates gemerkt! Bitte Chronos einmal neu laden.');
+        try{ await refreshUpdateTargetStatus(); }catch(e){}
+        return;
+      }
+
+      // Fallback für Browser ohne File System Access API: normaler Download
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -5335,7 +5449,7 @@
       showToast('Neue Version heruntergeladen – damit die alte Datei ersetzen.');
       el('updateBanner').style.display = 'none';
     }catch(e){
-      alert('Download fehlgeschlagen. Du kannst die neue Version auch direkt bei GitHub herunterladen.');
+      alert('Aktualisieren fehlgeschlagen. Du kannst die neue Version auch direkt bei GitHub herunterladen.');
     } finally {
       btn.disabled = false;
       btn.textContent = originalText;
