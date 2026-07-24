@@ -591,12 +591,11 @@
     background:var(--accent-tint-bg);
     color:var(--primary-dark);
     border:1px solid var(--accent-tint-border);
-    font-size:11px;
-    font-weight:700;
     cursor:help;
     flex-shrink:0;
   }
   .info-dot:hover{background:var(--accent-tint-hover);}
+  .info-dot-icon{width:9px;height:9px;fill:currentColor;}
   .zeit-row{
     display:flex;
     gap:8px;
@@ -1475,7 +1474,7 @@
       <div class="zeiten-block">
         <div class="zeiten-block-label">
           <label>Zeitspannen</label>
-          <span class="info-dot" title="Enter im letzten „Bis“-Feld fügt automatisch eine neue Zeitspanne hinzu.">ⓘ</span>
+          <span class="info-dot" title="Enter im letzten „Bis“-Feld fügt automatisch eine neue Zeitspanne hinzu."><svg class="info-dot-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="10.5" r="2.3"/><rect x="13.6" y="14.5" width="4.8" height="12.3" rx="2.4"/></svg></span>
           <button type="button" class="btn-ghost pip-btn" id="miniWindowBtn" title="Schwebendes Timer-Fenster öffnen">📌</button>
         </div>
         <div id="miniTimerBox" class="mini-timer-box">
@@ -1507,7 +1506,7 @@
         <div class="field">
           <div class="field-label-row">
             <label for="kuerzel">Kürzel</label>
-            <span class="info-dot" title="Wird automatisch aus deinem in den Einstellungen hinterlegten Vor-/Nachnamen gebildet, kann hier aber frei angepasst werden. Beispiel: „MM“ für Max Mustermann.">ⓘ</span>
+            <span class="info-dot" title="Wird automatisch aus deinem in den Einstellungen hinterlegten Vor-/Nachnamen gebildet, kann hier aber frei angepasst werden. Beispiel: „MM“ für Max Mustermann."><svg class="info-dot-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="10.5" r="2.3"/><rect x="13.6" y="14.5" width="4.8" height="12.3" rx="2.4"/></svg></span>
           </div>
           <input type="text" id="kuerzel" placeholder="z. B. MM" style="text-transform:uppercase;">
         </div>
@@ -1531,7 +1530,7 @@
       <div class="field">
         <div class="field-label-row">
           <label for="kunde">Kunde / Auftraggeber</label>
-          <span class="info-dot" title="Zuletzt verwendete Kunden erscheinen als Vorschlag darunter, Autovervollständigung ist möglich. Beispiel: „Musterkunde GmbH“.">ⓘ</span>
+          <span class="info-dot" title="Zuletzt verwendete Kunden erscheinen als Vorschlag darunter, Autovervollständigung ist möglich. Beispiel: „Musterkunde GmbH“."><svg class="info-dot-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="10.5" r="2.3"/><rect x="13.6" y="14.5" width="4.8" height="12.3" rx="2.4"/></svg></span>
         </div>
         <input type="text" id="kunde" list="kundeList" placeholder="Firmenname">
         <datalist id="kundeList"></datalist>
@@ -1540,7 +1539,7 @@
       <div class="field">
         <div class="field-label-row">
           <label for="ansprechpartner">Ansprechpartner</label>
-          <span class="info-dot" title="Autovervollständigung schlägt bereits erfasste Ansprechpartner vor. Beispiel: „Max Mustermann“.">ⓘ</span>
+          <span class="info-dot" title="Autovervollständigung schlägt bereits erfasste Ansprechpartner vor. Beispiel: „Max Mustermann“."><svg class="info-dot-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="10.5" r="2.3"/><rect x="13.6" y="14.5" width="4.8" height="12.3" rx="2.4"/></svg></span>
         </div>
         <input type="text" id="ansprechpartner" list="ansprechpartnerList" placeholder="Name der Kontaktperson">
         <datalist id="ansprechpartnerList"></datalist>
@@ -1548,7 +1547,7 @@
       <div class="field">
         <div class="field-label-row">
           <label for="anfrage">Anfrage bzw. Fehler</label>
-          <span class="info-dot" title="Hier den Namen des bearbeiteten Tickets eintragen. Beispiel: „Ticket #4471 – Server nicht erreichbar“.">ⓘ</span>
+          <span class="info-dot" title="Hier den Namen des bearbeiteten Tickets eintragen. Beispiel: „Ticket #4471 – Server nicht erreichbar“."><svg class="info-dot-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="10.5" r="2.3"/><rect x="13.6" y="14.5" width="4.8" height="12.3" rx="2.4"/></svg></span>
         </div>
         <div class="anfrage-input-wrap">
           <textarea id="anfrage" rows="2" placeholder="z. B. Ticket #4471 – Server nicht erreichbar"></textarea>
@@ -1559,14 +1558,14 @@
       <div class="field">
         <div class="field-label-row">
           <label for="massnahme">Durchgeführte Maßnahme</label>
-          <span class="info-dot" title="Was konkret unternommen wurde, um die Anfrage bzw. den Fehler zu bearbeiten. Beispiel: „Netzwerkkabel getauscht und Verbindung neu getestet“.">ⓘ</span>
+          <span class="info-dot" title="Was konkret unternommen wurde, um die Anfrage bzw. den Fehler zu bearbeiten. Beispiel: „Netzwerkkabel getauscht und Verbindung neu getestet“."><svg class="info-dot-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="10.5" r="2.3"/><rect x="13.6" y="14.5" width="4.8" height="12.3" rx="2.4"/></svg></span>
         </div>
         <textarea id="massnahme" rows="2"></textarea>
       </div>
       <div class="field">
         <div class="field-label-row">
           <label>Verbrauchte Gegenstände</label>
-          <span class="info-dot" title="Für jeden verbrauchten Gegenstand eine Zeile mit Name und Anzahl anlegen. Erscheint beim Kopieren als eigener Abschnitt „Verbraucht:“ unter dem Eintrag. Beispiel: Name „HDMI Kabel 2m“ mit Anzahl 2.">ⓘ</span>
+          <span class="info-dot" title="Für jeden verbrauchten Gegenstand eine Zeile mit Name und Anzahl anlegen. Erscheint beim Kopieren als eigener Abschnitt „Verbraucht:“ unter dem Eintrag. Beispiel: Name „HDMI Kabel 2m“ mit Anzahl 2."><svg class="info-dot-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="10.5" r="2.3"/><rect x="13.6" y="14.5" width="4.8" height="12.3" rx="2.4"/></svg></span>
         </div>
         <div id="verbrauchtItemsList"></div>
         <button type="button" class="btn-secondary" id="addVerbrauchtBtn">+ Gegenstand hinzufügen</button>
@@ -1825,6 +1824,7 @@
       <details>
         <summary>Was ist neu? (Verlauf anzeigen)</summary>
         <ul class="changelog-list">
+          <li><strong>2.9.2</strong> – Info-Symbole (ⓘ) durch sauberes, gezeichnetes Icon ersetzt</li>
           <li><strong>2.9.1</strong> – Fließtext-Import robuster: 2-stellige Jahre, Monatsnamen, Kürzel/Namen mit Punkt, Komma statt „/"</li>
           <li><strong>2.9.0</strong> – Akzentfarbe (6 Presets) und einstellbare Textgröße</li>
           <li><strong>2.8.1</strong> – Update-Ziel merken (kein erneuter Dateidialog nötig)</li>
@@ -2020,7 +2020,7 @@
   const ACCENT_COLOR_KEY = 'accentColorPreference';
   const FONT_SIZE_KEY = 'fontSizePreference';
 
-  const APP_VERSION = '2.9.1';
+  const APP_VERSION = '2.9.2';
   const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
   const UPDATE_HTML_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/zeiterfassung.html';
   const UPDATE_HANDLE_KEY = 'updateFileHandle';
