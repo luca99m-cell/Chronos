@@ -1825,6 +1825,7 @@
       <details>
         <summary>Was ist neu? (Verlauf anzeigen)</summary>
         <ul class="changelog-list">
+          <li><strong>2.9.1</strong> – Fließtext-Import robuster: 2-stellige Jahre, Monatsnamen, Kürzel/Namen mit Punkt, Komma statt „/"</li>
           <li><strong>2.9.0</strong> – Akzentfarbe (6 Presets) und einstellbare Textgröße</li>
           <li><strong>2.8.1</strong> – Update-Ziel merken (kein erneuter Dateidialog nötig)</li>
           <li><strong>2.8.0</strong> – Testversion für die Update-Prüfung</li>
@@ -2019,7 +2020,7 @@
   const ACCENT_COLOR_KEY = 'accentColorPreference';
   const FONT_SIZE_KEY = 'fontSizePreference';
 
-  const APP_VERSION = '2.9.0';
+  const APP_VERSION = '2.9.1';
   const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
   const UPDATE_HTML_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/zeiterfassung.html';
   const UPDATE_HANDLE_KEY = 'updateFileHandle';
@@ -3687,22 +3688,55 @@
     const line1 = lines[0] || '';
     const line2 = lines.slice(1).join(' / ');
 
-    const parts1 = line1.split('/').map(p => p.trim()).filter(p => p.length > 0);
+    // Trennzeichen zwischen den Feldern: normalerweise "/", aber falls gar keins
+    // vorkommt, wird als Fallback "," versucht - nicht jeder tippt den Slash.
+    const parts1 = (line1.includes('/') ? line1.split('/') : line1.split(','))
+      .map(p => p.trim()).filter(p => p.length > 0);
     const used = new Set();
 
-    // Datum: DD.MM.YYYY oder YYYY-MM-DD
+    const MONTH_NAMES = {
+      'januar':1, 'jänner':1, 'jaenner':1, 'februar':2, 'märz':3, 'maerz':3, 'april':4,
+      'mai':5, 'juni':6, 'juli':7, 'august':8, 'september':9, 'oktober':10, 'november':11, 'dezember':12
+    };
+
+    // Datum: DD.MM.YYYY, DD.MM.YY (2-stelliges Jahr wird sinnvoll ergänzt), YYYY-MM-DD
+    // oder ausgeschrieben wie "23. Juli 2026" / "23 Juli" (Jahr optional, dann aktuelles Jahr).
+    // Mit Bereichsprüfung (Monat 1-12, Tag 1-31), damit z. B. ein Preis wie "23.13" nicht
+    // versehentlich als Datum durchrutscht.
     parts1.forEach((part, idx) => {
       if(used.has(idx) || result.datum) return;
-      let m = part.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+
+      let m = part.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
       if(m){
-        result.datum = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-        used.add(idx);
+        const day = parseInt(m[1],10), month = parseInt(m[2],10);
+        let year = parseInt(m[3],10);
+        if(m[3].length === 2) year += (year <= 69 ? 2000 : 1900); // "26" -> 2026, "95" -> 1995
+        if(month >= 1 && month <= 12 && day >= 1 && day <= 31){
+          result.datum = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          used.add(idx);
+        }
         return;
       }
-      m = part.match(/(\d{4})-(\d{2})-(\d{2})/);
+
+      m = part.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if(m){
-        result.datum = m[0];
-        used.add(idx);
+        const month = parseInt(m[2],10), day = parseInt(m[3],10);
+        if(month >= 1 && month <= 12 && day >= 1 && day <= 31){
+          result.datum = m[0];
+          used.add(idx);
+        }
+        return;
+      }
+
+      m = part.match(/^(\d{1,2})\.?\s*([A-Za-zÄÖÜäöü]+)\.?\s*(\d{4})?$/);
+      if(m){
+        const day = parseInt(m[1],10);
+        const monthNum = MONTH_NAMES[m[2].toLowerCase()];
+        if(monthNum && day >= 1 && day <= 31){
+          const year = m[3] ? parseInt(m[3],10) : new Date().getFullYear();
+          result.datum = `${year}-${String(monthNum).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          used.add(idx);
+        }
       }
     });
 
@@ -3743,30 +3777,42 @@
     // Bekannte Tätigkeiten (aus der Dropdown-Liste) zuerst unabhängig von der Position
     // erkennen - das macht den Import robust, falls z. B. "Kunde" leer gelassen wurde
     // und sich dadurch die Positionen der übrigen Textstücke verschoben haben.
+    // Toleriert dabei Groß-/Kleinschreibung und einen versehentlichen Punkt am Ende
+    // und übernimmt die korrekte Schreibweise aus der Liste statt der rohen Eingabe.
     const knownTaetigkeiten = Array.isArray(settings.taetigkeiten) ? settings.taetigkeiten : [];
     parts1.forEach((part, idx) => {
       if(used.has(idx) || result.taetigkeit) return;
-      if(knownTaetigkeiten.some(t => t.toLowerCase() === part.toLowerCase())){
-        result.taetigkeit = part;
+      const normalized = part.replace(/\.+$/, '').toLowerCase();
+      const match = knownTaetigkeiten.find(t => t.toLowerCase() === normalized);
+      if(match){
+        result.taetigkeit = match;
         used.add(idx);
       }
     });
 
-    // Bekannte Kunden (aus der bisherigen Historie) ebenso unabhängig von der Position erkennen
+    // Bekannte Kunden (aus der bisherigen Historie) ebenso unabhängig von der Position,
+    // tolerant gegenüber Punkt/Schreibweise, erkennen
     const knownKunden = [...new Set(entries.map(e => e.kunde).filter(Boolean))];
     parts1.forEach((part, idx) => {
       if(used.has(idx) || result.kunde) return;
-      if(knownKunden.some(k => k.toLowerCase() === part.toLowerCase())){
-        result.kunde = part;
+      const normalized = part.replace(/\.+$/, '').toLowerCase();
+      const match = knownKunden.find(k => k.toLowerCase() === normalized);
+      if(match){
+        result.kunde = match;
         used.add(idx);
       }
     });
 
-    // Kurzes Großbuchstaben-Kürzel (z. B. "MM", "ABK") unabhängig von der Position erkennen
+    // Kurzes Großbuchstaben-Kürzel (z. B. "MM", "ABK") unabhängig von der Position erkennen.
+    // Toleriert dabei auch mit Punkten geschriebene Initialen wie "M.M." oder "M.M" (Punkte
+    // werden beim Übernehmen entfernt) - nur Großbuchstaben und Punkte werden akzeptiert,
+    // damit ein echter Name wie "M. Mustermann" (mit Leerzeichen/Kleinbuchstaben) nicht
+    // versehentlich als Kürzel durchgeht.
     parts1.forEach((part, idx) => {
       if(used.has(idx) || result.kuerzel) return;
-      if(/^[A-ZÄÖÜ]{2,5}$/.test(part)){
-        result.kuerzel = part;
+      const cleaned = part.replace(/\./g, '');
+      if(/^[A-ZÄÖÜ.]+$/.test(part) && /^[A-ZÄÖÜ]{2,5}$/.test(cleaned)){
+        result.kuerzel = cleaned;
         used.add(idx);
       }
     });
