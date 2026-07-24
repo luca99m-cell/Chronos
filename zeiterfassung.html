@@ -107,6 +107,62 @@
     --brand-blue:#6f9cf0;
     color-scheme: dark;
   }
+
+  /* Akzentfarben-Presets: Blau ist der Standard (kein data-accent nötig, siehe :root oben).
+     Jede Farbe überschreibt Primär-/Tönungsfarben, damit Buttons, Hervorhebungen, Chips
+     etc. konsistent mitziehen - "erledigt"/Erfolg (--accent, grün) bleibt bewusst überall
+     gleich, damit dessen Bedeutung nicht verloren geht. */
+  :root[data-accent="green"]{
+    --primary:#16a34a; --primary-dark:#15803d;
+    --accent-tint-bg:#eefdf3; --accent-tint-border:#bbf7d0; --accent-tint-hover:#dcfce7;
+    --brand-blue:#15803d;
+  }
+  :root[data-theme="dark"][data-accent="green"]{
+    --primary:#22c55e; --primary-dark:#4ade80;
+    --accent-tint-bg:#0f2c1c; --accent-tint-border:#1c4a30; --accent-tint-hover:#153b26;
+    --brand-blue:#4ade80;
+  }
+  :root[data-accent="purple"]{
+    --primary:#7c3aed; --primary-dark:#6d28d9;
+    --accent-tint-bg:#f3eefc; --accent-tint-border:#ddd0fa; --accent-tint-hover:#ede4fb;
+    --brand-blue:#6d28d9;
+  }
+  :root[data-theme="dark"][data-accent="purple"]{
+    --primary:#a78bfa; --primary-dark:#c4b5fd;
+    --accent-tint-bg:#2a2050; --accent-tint-border:#40325f; --accent-tint-hover:#332764;
+    --brand-blue:#c4b5fd;
+  }
+  :root[data-accent="orange"]{
+    --primary:#ea580c; --primary-dark:#c2410c;
+    --accent-tint-bg:#fff3ea; --accent-tint-border:#fed7aa; --accent-tint-hover:#ffe8d5;
+    --brand-blue:#c2410c;
+  }
+  :root[data-theme="dark"][data-accent="orange"]{
+    --primary:#fb923c; --primary-dark:#fdba74;
+    --accent-tint-bg:#3a2312; --accent-tint-border:#5c3a1e; --accent-tint-hover:#472c17;
+    --brand-blue:#fdba74;
+  }
+  :root[data-accent="pink"]{
+    --primary:#db2777; --primary-dark:#be185d;
+    --accent-tint-bg:#fdf1f5; --accent-tint-border:#fbcfe8; --accent-tint-hover:#fce7f0;
+    --brand-blue:#be185d;
+  }
+  :root[data-theme="dark"][data-accent="pink"]{
+    --primary:#f472b6; --primary-dark:#f9a8d4;
+    --accent-tint-bg:#3a1a2c; --accent-tint-border:#5c2d45; --accent-tint-hover:#472237;
+    --brand-blue:#f9a8d4;
+  }
+  :root[data-accent="teal"]{
+    --primary:#0d9488; --primary-dark:#0f766e;
+    --accent-tint-bg:#e6fbf8; --accent-tint-border:#99f6e4; --accent-tint-hover:#ccfbf1;
+    --brand-blue:#0f766e;
+  }
+  :root[data-theme="dark"][data-accent="teal"]{
+    --primary:#2dd4bf; --primary-dark:#5eead4;
+    --accent-tint-bg:#0d2e2b; --accent-tint-border:#1a4b45; --accent-tint-hover:#153b37;
+    --brand-blue:#5eead4;
+  }
+
   *{box-sizing:border-box;}
   body{
     margin:0;
@@ -1269,6 +1325,32 @@
     cursor:pointer;
   }
   .bg-image-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .accent-swatch-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .accent-swatch{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:var(--swatch-color);
+    border:none;
+    cursor:pointer;
+    position:relative;
+    flex-shrink:0;
+    transition:transform .12s ease;
+  }
+  .accent-swatch:hover{transform:scale(1.1);}
+  .accent-swatch.active{box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--swatch-color);}
+  .accent-swatch.active::after{
+    content:'✓';
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:14px;
+    font-weight:700;
+    text-shadow:0 1px 2px rgba(0,0,0,0.45);
+  }
   .bg-image-preview{
     width:44px;
     height:44px;
@@ -1654,6 +1736,26 @@
           <button type="button" class="mode-btn active" id="tableViewGroupedBtn" data-view="grouped" style="flex:1;">Gruppiert (neu)</button>
         </div>
 
+        <h4>🎨 Akzentfarbe</h4>
+        <p style="margin-bottom:10px;">Persönliche Anzeige-Einstellung für diesen Browser – wird wie Dunkelmodus und Hintergrund <strong>nicht</strong> in der Datei gespeichert.</p>
+        <div class="accent-swatch-row" id="accentSwatchRow">
+          <button type="button" class="accent-swatch active" data-accent="blue" style="--swatch-color:#2563eb;" title="Blau (Standard)"></button>
+          <button type="button" class="accent-swatch" data-accent="green" style="--swatch-color:#16a34a;" title="Grün"></button>
+          <button type="button" class="accent-swatch" data-accent="purple" style="--swatch-color:#7c3aed;" title="Lila"></button>
+          <button type="button" class="accent-swatch" data-accent="orange" style="--swatch-color:#ea580c;" title="Orange"></button>
+          <button type="button" class="accent-swatch" data-accent="pink" style="--swatch-color:#db2777;" title="Pink"></button>
+          <button type="button" class="accent-swatch" data-accent="teal" style="--swatch-color:#0d9488;" title="Türkis"></button>
+        </div>
+
+        <h4>🔤 Textgröße</h4>
+        <p style="margin-bottom:10px;">Persönliche Anzeige-Einstellung für diesen Browser.</p>
+        <div class="summary-mode-toggle" id="fontSizeToggle" style="width:100%;">
+          <button type="button" class="mode-btn" data-fontsize="small" style="flex:1;">Klein</button>
+          <button type="button" class="mode-btn active" data-fontsize="normal" style="flex:1;">Normal</button>
+          <button type="button" class="mode-btn" data-fontsize="large" style="flex:1;">Groß</button>
+          <button type="button" class="mode-btn" data-fontsize="xlarge" style="flex:1;">Sehr groß</button>
+        </div>
+
         <h4>🎨 Eigener Hintergrund</h4>
         <p style="margin-bottom:10px;">Persönliche Anzeige-Einstellung für diesen Browser – wird wie der Dunkelmodus <strong>nicht</strong> in der Datei gespeichert und gilt daher nicht automatisch für andere verbundene Dateien oder Geräte.</p>
         <div class="field">
@@ -1913,6 +2015,8 @@
   const CUSTOM_BG_KEY = 'customBackgroundColor';
   const CUSTOM_BG_IMAGE_KEY = 'customBackgroundImage';
   const TIMER_KEY = 'runningTimerStart';
+  const ACCENT_COLOR_KEY = 'accentColorPreference';
+  const FONT_SIZE_KEY = 'fontSizePreference';
 
   const APP_VERSION = '2.8.1';
   const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
@@ -2054,6 +2158,63 @@
     setDarkMode(!isDark);
     try{ await idbSet(DARK_MODE_KEY, !isDark); }catch(e){ console.warn('Dark-Mode-Einstellung konnte nicht gespeichert werden:', e); }
   });
+
+  // ---------- Akzentfarbe (persönliche Browser-Einstellung, NICHT in der Datei gespeichert) ----------
+  function setAccentColor(colorId){
+    const id = colorId || 'blue';
+    if(id === 'blue'){
+      document.documentElement.removeAttribute('data-accent');
+    } else {
+      document.documentElement.setAttribute('data-accent', id);
+    }
+    document.querySelectorAll('.accent-swatch').forEach(btn=>{
+      btn.classList.toggle('active', btn.getAttribute('data-accent') === id);
+    });
+  }
+
+  el('accentSwatchRow').addEventListener('click', async (ev)=>{
+    const btn = ev.target.closest('.accent-swatch');
+    if(!btn) return;
+    const colorId = btn.getAttribute('data-accent');
+    setAccentColor(colorId);
+    try{ await idbSet(ACCENT_COLOR_KEY, colorId); }catch(e){ console.warn('Akzentfarbe konnte nicht gespeichert werden:', e); }
+  });
+
+  async function loadAccentColorPreference(){
+    try{
+      const stored = await idbGet(ACCENT_COLOR_KEY);
+      if(stored) setAccentColor(stored);
+    }catch(e){ /* Standard: Blau */ }
+  }
+
+  // ---------- Textgröße (persönliche Browser-Einstellung, NICHT in der Datei gespeichert) ----------
+  // Nutzt CSS-Zoom statt einer rem-Umstellung, da die App fast durchgängig mit px-Größen
+  // arbeitet - Zoom skaliert Schrift UND Abstände/Breiten gemeinsam (Chrome/Edge-only,
+  // passt zu den ohnehin schon Chrome/Edge-exklusiven Funktionen dieser App).
+  const FONT_SIZE_ZOOM = { small: '90%', normal: '100%', large: '112%', xlarge: '125%' };
+
+  function setFontSize(sizeId){
+    const id = FONT_SIZE_ZOOM[sizeId] ? sizeId : 'normal';
+    document.body.style.zoom = FONT_SIZE_ZOOM[id];
+    el('fontSizeToggle').querySelectorAll('.mode-btn').forEach(btn=>{
+      btn.classList.toggle('active', btn.getAttribute('data-fontsize') === id);
+    });
+  }
+
+  el('fontSizeToggle').addEventListener('click', async (ev)=>{
+    const btn = ev.target.closest('.mode-btn');
+    if(!btn) return;
+    const sizeId = btn.getAttribute('data-fontsize');
+    setFontSize(sizeId);
+    try{ await idbSet(FONT_SIZE_KEY, sizeId); }catch(e){ console.warn('Textgröße konnte nicht gespeichert werden:', e); }
+  });
+
+  async function loadFontSizePreference(){
+    try{
+      const stored = await idbGet(FONT_SIZE_KEY);
+      if(stored) setFontSize(stored);
+    }catch(e){ /* Standard: Normal */ }
+  }
 
   // ---------- Eigener Hintergrund (persönliche Browser-Einstellung, NICHT in der Datei gespeichert) ----------
   let customBgColor = null; // null = Standardfarbe des jeweiligen Themes wird verwendet
@@ -2401,6 +2562,8 @@
     el('rangeFrom').value = localISODate();
     el('rangeTo').value = localISODate();
     await loadDarkModePreference();
+    await loadAccentColorPreference();
+    await loadFontSizePreference();
     await loadCustomBackgroundPreference();
     await loadCustomBackgroundImagePreference();
     await loadPageSizePreference();
