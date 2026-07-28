@@ -696,6 +696,31 @@
     transform:translateX(-50%) translateY(0);
   }
 
+  .michel-egg{
+    position:fixed;
+    bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(20px) scale(0.85);
+    background:var(--card);
+    border:2px solid var(--primary);
+    border-radius:16px;
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    box-shadow:0 16px 40px rgba(0,0,0,0.3);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1);
+    z-index:200;
+    max-width:min(90vw, 380px);
+  }
+  .michel-egg.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+  .michel-egg-face{font-size:40px;flex-shrink:0;line-height:1;}
+  .michel-egg-text{font-size:13.5px;color:var(--text);line-height:1.4;font-weight:600;}
+
   /* Übersicht (Monat / Zeitraum) */
   .summary-block{
     border:1px solid var(--border);
@@ -1143,6 +1168,20 @@
     width:100%;
     box-shadow:0 20px 50px rgba(0,0,0,0.25);
   }
+  /* Fließtext-Import-Fenster lässt sich per Ziehgriff (unten rechts) in der Größe anpassen -
+     praktisch bei viel oder mehreren Einträgen auf einmal. Die Textarea füllt den jeweils
+     verfügbaren Platz automatisch aus, statt selbst über den Fensterrand hinauszuwachsen. */
+  #importPasteOverlay .box{
+    max-width:720px;
+    resize:both;
+    overflow:auto;
+    min-width:360px;
+    min-height:360px;
+    display:flex;
+    flex-direction:column;
+  }
+  #importPasteOverlay .field{flex:1;display:flex;flex-direction:column;min-height:0;}
+  #importPasteText{flex:1;resize:none;min-height:120px;}
   #settingsOverlay h2, #importPasteOverlay h2, #importReviewOverlay h2, #importBulkReviewOverlay h2, #entryDetailOverlay h2{margin-top:0;font-size:19px;}
   #settingsOverlay h4{font-size:13.5px;margin:22px 0 8px;color:var(--text);border-top:1px solid var(--border);padding-top:16px;}
   #settingsOverlay h4:first-of-type{border-top:none;padding-top:0;margin-top:0;}
@@ -1824,6 +1863,9 @@
       <details>
         <summary>Was ist neu? (Verlauf anzeigen)</summary>
         <ul class="changelog-list">
+          <li><strong>2.9.5</strong> – Kleine Überraschung irgendwo versteckt 😉</li>
+          <li><strong>2.9.4</strong> – Fließtext-Import-Fenster per Ziehgriff in der Größe anpassbar</li>
+          <li><strong>2.9.3</strong> – Effektiv-Zeit beim Mehrfach-Import sichtbar &amp; bearbeitbar (statt nur im Hintergrund berechnet)</li>
           <li><strong>2.9.2</strong> – Info-Symbole (ⓘ) durch sauberes, gezeichnetes Icon ersetzt</li>
           <li><strong>2.9.1</strong> – Fließtext-Import robuster: 2-stellige Jahre, Monatsnamen, Kürzel/Namen mit Punkt, Komma statt „/"</li>
           <li><strong>2.9.0</strong> – Akzentfarbe (6 Presets) und einstellbare Textgröße</li>
@@ -1923,6 +1965,7 @@
             <th style="width:26px;"><input type="checkbox" id="bulkReviewSelectAll" checked title="Alle aus-/abwählen"></th>
             <th style="width:128px;">Datum</th>
             <th style="width:140px;">Zeit(en)</th>
+            <th style="width:76px;">Effektiv</th>
             <th style="width:64px;">Kürzel</th>
             <th style="min-width:120px;">Tätigkeit</th>
             <th style="min-width:140px;">Kunde</th>
@@ -2001,6 +2044,10 @@
 </div>
 
 <div class="toast" id="toast">Kopiert &amp; Gespeichert!</div>
+<div class="michel-egg" id="michelEgg">
+  <div class="michel-egg-face">😎</div>
+  <div class="michel-egg-text">MICHEL-ALARM! Gerüchten zufolge trinkt er mehr Kaffee, als er Stunden einträgt. ☕</div>
+</div>
 
 <div id="printReport"></div>
 
@@ -2020,7 +2067,7 @@
   const ACCENT_COLOR_KEY = 'accentColorPreference';
   const FONT_SIZE_KEY = 'fontSizePreference';
 
-  const APP_VERSION = '2.9.2';
+  const APP_VERSION = '2.9.5';
   const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
   const UPDATE_HTML_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/zeiterfassung.html';
   const UPDATE_HANDLE_KEY = 'updateFileHandle';
@@ -3353,6 +3400,16 @@
     setTimeout(()=> toast.classList.remove('show'), 1800);
   }
 
+  // Kleines Easter Egg: wer bei "Verbrauchte Gegenstände" exakt "Michel" einträgt,
+  // bekommt eine kurze, alberne Meldung zu sehen.
+  let michelEggTimeout = null;
+  function showMichelEgg(){
+    const egg = el('michelEgg');
+    egg.classList.add('show');
+    clearTimeout(michelEggTimeout);
+    michelEggTimeout = setTimeout(()=> egg.classList.remove('show'), 3200);
+  }
+
   function getFormData(){
     const zeiten = getZeitenFromForm().filter(z => z.von && z.bis);
     return {
@@ -3960,6 +4017,23 @@
     const list = Array.isArray(settings.taetigkeiten) ? settings.taetigkeiten : [];
     el('bulkTaetigkeitList').innerHTML = list.map(t => `<option value="${escapeHtml(t)}">`).join('');
 
+    // Falls keine Effektiv-Zeit im Text stand, schon hier aus der erkannten Zeitspanne
+    // vorbelegen (statt das erst beim tatsächlichen Übernehmen im Hintergrund zu tun) -
+    // so sieht man in der Tabelle direkt den Wert, der verwendet würde, und kann ihn
+    // korrigieren, falls die tatsächliche effektive Zeit von der Zeitspanne abweicht
+    // (z. B. wegen einer Pause).
+    bulkReviewItems.forEach(item=>{
+      const p = item.parsed;
+      if(!p.effektiv && p.zeitenStr){
+        const zeitenArr = parseZeitenStringToArray(p.zeitenStr);
+        if(zeitenArr.length){
+          let total = 0;
+          zeitenArr.forEach(z => { total += calcDurationMinutes(z.von, z.bis); });
+          if(total > 0) p.effektiv = minutesToHHMM(total);
+        }
+      }
+    });
+
     el('bulkReviewBody').innerHTML = bulkReviewItems.map((item, idx)=>{
       const p = item.parsed;
       const rowClasses = [
@@ -3970,6 +4044,7 @@
         <td><input type="checkbox" class="bulk-check" data-idx="${idx}" ${item.included ? 'checked' : ''}></td>
         <td><input type="date" class="bulk-cell" data-idx="${idx}" data-field="datum" value="${escapeHtml(p.datum || '')}"></td>
         <td><input type="text" class="bulk-cell" data-idx="${idx}" data-field="zeitenStr" value="${escapeHtml(p.zeitenStr || '')}" placeholder="10:00 - 11:00"></td>
+        <td><input type="text" class="bulk-cell" data-idx="${idx}" data-field="effektiv" value="${escapeHtml(p.effektiv || '')}" placeholder="z. B. 00:45" title="Effektive Zeit - kann von der Zeitspanne abweichen, z. B. wegen einer Pause"></td>
         <td><input type="text" class="bulk-cell" data-idx="${idx}" data-field="kuerzel" value="${escapeHtml(p.kuerzel || '')}"></td>
         <td><input type="text" class="bulk-cell" data-idx="${idx}" data-field="taetigkeit" value="${escapeHtml(p.taetigkeit || '')}" list="bulkTaetigkeitList"></td>
         <td><input type="text" class="bulk-cell" data-idx="${idx}" data-field="kunde" value="${escapeHtml(p.kunde || '')}"></td>
@@ -4204,6 +4279,16 @@
       qtyInput.value = Math.max(1, parseInt(qtyInput.value, 10) || 1);
     });
     row.querySelector('.verbraucht-remove').addEventListener('click', ()=> row.remove());
+
+    const nameInput = row.querySelector('.verbraucht-name');
+    let michelAlreadyShown = false;
+    nameInput.addEventListener('input', ()=>{
+      const isMichel = nameInput.value.trim().toLowerCase() === 'michel';
+      if(isMichel && !michelAlreadyShown){
+        showMichelEgg();
+      }
+      michelAlreadyShown = isMichel;
+    });
 
     return row;
   }
