@@ -672,6 +672,18 @@
   }
   #saveBtn:hover{filter:brightness(0.92);}
   #saveDraftBtn{width:100%;padding:10px;margin-top:8px;font-size:13.5px;}
+  .terra-checkbox-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    margin-bottom:10px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .terra-checkbox-row input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:var(--primary);flex-shrink:0;}
 
   .hint{font-size:12px;color:var(--muted);margin-top:10px;text-align:center;}
 
@@ -904,7 +916,48 @@
   .legend-swatch.heat-3{background:var(--heat-3);}
   .legend-swatch.heat-4{background:var(--heat-4);}
 
-  .search-bar{margin-bottom:14px;}
+  .search-bar{margin-bottom:14px;display:flex;gap:8px;}
+  .search-bar #searchInput{flex:1;}
+  .filter-toggle-btn{
+    flex-shrink:0;
+    white-space:nowrap;
+    position:relative;
+    font-size:13px;
+  }
+  .filter-active-badge{
+    display:inline-block;
+    min-width:16px;
+    height:16px;
+    padding:0 4px;
+    margin-left:5px;
+    border-radius:999px;
+    background:var(--primary);
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    line-height:16px;
+    text-align:center;
+  }
+  .table-filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin:-4px 0 14px;
+    padding:12px;
+    background:var(--table-header-bg);
+    border-radius:10px;
+  }
+  .table-filters select{
+    flex:1;
+    min-width:140px;
+    padding:7px 9px;
+    border:1px solid var(--border);
+    border-radius:7px;
+    font-size:12.5px;
+    background:var(--input-bg);
+    color:var(--text);
+  }
+  .table-filters #filterResetBtn{flex-shrink:0;font-size:12.5px;padding:7px 12px;}
   .search-bar input{
     width:100%;
     padding:10px 12px;
@@ -1250,6 +1303,11 @@
     color:var(--editing-text);
     border-color:var(--editing-border);
   }
+  .entry-detail-terra-badge{
+    background:var(--accent-tint-bg);
+    color:var(--primary-dark);
+    border-color:var(--accent-tint-border);
+  }
   .entry-detail-grid{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
@@ -1430,20 +1488,108 @@
     body.printing > *:not(#printReport){display:none !important;}
     #printReport{
       display:block !important;
-      color:#111;
-      font-family:Arial, sans-serif;
+      color:#1f2430;
+      font-family:'Segoe UI', Helvetica, Arial, sans-serif;
     }
-    #printReport h1{font-size:20px;margin:0 0 4px;}
-    #printReport .report-brand{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#1B3E8F;margin:0 0 6px;}
-    #printReport .report-meta{color:#555;font-size:12px;margin-bottom:16px;}
-    #printReport .report-summary{display:flex;gap:28px;margin-bottom:18px;}
-    #printReport .report-summary div{display:flex;flex-direction:column;}
-    #printReport .report-summary strong{font-size:18px;}
-    #printReport .report-summary span{font-size:11px;color:#555;}
-    #printReport h2{font-size:14px;margin:18px 0 8px;}
-    #printReport table{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:10.5px;}
-    #printReport th, #printReport td{border:1px solid #ccc;padding:4px 6px;text-align:left;vertical-align:top;}
-    #printReport th{background:#f0f0f0;}
+    #printReport .report-header{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      border-bottom:3px solid #1B3E8F;
+      padding-bottom:12px;
+      margin-bottom:22px;
+    }
+    #printReport .report-brand{
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:#1B3E8F;
+      margin:0 0 5px;
+    }
+    #printReport h1{font-size:23px;margin:0;color:#111;font-weight:800;letter-spacing:-.01em;}
+    #printReport .report-meta{color:#666;font-size:11.5px;margin:6px 0 0;}
+    #printReport .report-generated{color:#999;font-size:10px;text-align:right;white-space:nowrap;}
+    #printReport .report-summary{display:flex;gap:12px;margin-bottom:26px;}
+    #printReport .report-stat{
+      flex:1;
+      background:#eef2ff;
+      border:1px solid #dbe4ff;
+      border-radius:10px;
+      padding:12px 18px;
+    }
+    #printReport .report-stat strong{display:block;font-size:23px;color:#1B3E8F;font-weight:800;line-height:1.25;}
+    #printReport .report-stat span{font-size:10px;color:#5b6472;text-transform:uppercase;letter-spacing:.05em;}
+    #printReport h2{
+      font-size:12.5px;
+      margin:24px 0 9px;
+      color:#1B3E8F;
+      text-transform:uppercase;
+      letter-spacing:.07em;
+      font-weight:800;
+    }
+    #printReport table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:10px;}
+    #printReport th{
+      background:#1B3E8F;
+      color:#fff;
+      text-align:left;
+      padding:7px 8px;
+      font-weight:700;
+      font-size:9px;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+    #printReport td{
+      padding:6px 8px;
+      border-bottom:1px solid #e5e7eb;
+      vertical-align:top;
+    }
+    #printReport tbody tr:nth-child(even){background:#f6f8fc;}
+    #printReport tr{page-break-inside:avoid;}
+    #printReport .report-status-icon{font-size:10px;white-space:nowrap;}
+
+    #printReport .report-daily-chart{
+      display:flex;
+      align-items:flex-end;
+      gap:3px;
+      height:90px;
+      margin-bottom:22px;
+      padding:10px 10px 0;
+      background:#f6f8fc;
+      border-radius:10px;
+    }
+    #printReport .report-daily-col{
+      flex:1;
+      min-width:0;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-end;
+      gap:2px;
+    }
+    #printReport .report-daily-bar-track{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;}
+    #printReport .report-daily-bar{width:60%;min-width:2px;background:#1B3E8F;border-radius:2px 2px 0 0;}
+    #printReport .report-daily-bar.weekend{background:#93a5cf;}
+    #printReport .report-daily-label{font-size:6.5px;color:#8890a0;margin-bottom:6px;white-space:nowrap;}
+
+    #printReport .report-bars{margin-bottom:22px;}
+    #printReport .report-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:10.5px;}
+    #printReport .report-bar-label{width:120px;flex-shrink:0;font-weight:700;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    #printReport .report-bar-track{flex:1;background:#eef1f6;border-radius:4px;height:14px;overflow:hidden;}
+    #printReport .report-bar-fill{height:100%;background:#1B3E8F;border-radius:4px;}
+    #printReport .report-bar-value{width:130px;flex-shrink:0;color:#666;font-size:9.5px;text-align:right;}
+
+    #printReport .report-two-col{display:flex;gap:28px;}
+    #printReport .report-two-col > div{flex:1;min-width:0;}
+    #printReport .report-footer{
+      margin-top:28px;
+      padding-top:10px;
+      border-top:1px solid #e5e7eb;
+      font-size:9.5px;
+      color:#9aa1ab;
+      text-align:center;
+    }
   }
 
   @media (max-width:900px){
@@ -1610,6 +1756,11 @@
         <button type="button" class="btn-secondary" id="addVerbrauchtBtn">+ Gegenstand hinzufügen</button>
       </div>
 
+      <label class="terra-checkbox-row" for="terraVorOrt">
+        <input type="checkbox" id="terraVorOrt">
+        <span>TERRA vor-Ort Service</span>
+      </label>
+
       <div class="save-bar">
         <button type="submit" id="saveBtn">📋 Kopieren &amp; Speichern</button>
         <button type="button" class="btn-secondary" id="saveDraftBtn">📝 Als Entwurf speichern</button>
@@ -1666,6 +1817,19 @@
 
     <div class="search-bar">
       <input type="text" id="searchInput" placeholder="🔍 Suche nach Kunde, Ansprechpartner, Kürzel, Tätigkeit, Anfrage oder Maßnahme ...">
+      <button type="button" class="btn-ghost filter-toggle-btn" id="filterToggleBtn" title="Filter ein-/ausblenden">
+        ⚙️ Filter<span class="filter-active-badge" id="filterActiveBadge" style="display:none;"></span>
+      </button>
+    </div>
+    <div class="table-filters" id="tableFilters" style="display:none;">
+      <select id="filterKuerzel"><option value="">Alle Kürzel</option></select>
+      <select id="filterKunde"><option value="">Alle Kunden</option></select>
+      <select id="filterStatus">
+        <option value="">Alle</option>
+        <option value="open">Nur offene</option>
+        <option value="done">Nur erledigte</option>
+      </select>
+      <button type="button" class="btn-ghost" id="filterResetBtn">Zurücksetzen</button>
     </div>
     <div class="count-badge" id="countBadge">0 Einträge</div>
     <div class="table-hint">💡 Klick auf eine Zeile öffnet den Eintrag vollständig (Anfrage/Maßnahme etc.)</div>
@@ -1863,6 +2027,9 @@
       <details>
         <summary>Was ist neu? (Verlauf anzeigen)</summary>
         <ul class="changelog-list">
+          <li><strong>2.12.0</strong> – PDF-Bericht deutlich erweitert: Tages-Chart, Aufteilung nach Kunde, Ø pro Tag, verbrauchte Gegenstände, Status-Icons</li>
+          <li><strong>2.11.0</strong> – Haken „TERRA vor-Ort Service“ beim Speichern, setzt Präfix vor den kopierten Text</li>
+          <li><strong>2.10.0</strong> – PDF-Bericht überarbeitet (Farben, Stat-Karten, Zebra-Tabellen) + Filter-Button für die Tabelle (Kürzel/Kunde/Status)</li>
           <li><strong>2.9.5</strong> – Kleine Überraschung irgendwo versteckt 😉</li>
           <li><strong>2.9.4</strong> – Fließtext-Import-Fenster per Ziehgriff in der Größe anpassbar</li>
           <li><strong>2.9.3</strong> – Effektiv-Zeit beim Mehrfach-Import sichtbar &amp; bearbeitbar (statt nur im Hintergrund berechnet)</li>
@@ -1895,7 +2062,7 @@
     <p>Füge den kopierten Fließtext ein (z. B. aus einer E-Mail oder einem alten Eintrag). Leere Felder sind kein Problem. <strong>Mehrere Einträge auf einmal?</strong> Einfach jeden Eintrag im selben Format darunter einfügen und durch eine <strong>Leerzeile</strong> trennen – du bekommst dann eine Liste zum Prüfen, bevor irgendetwas gespeichert wird.</p>
     <div class="field">
       <label for="importPasteText">Fließtext</label>
-      <textarea id="importPasteText" rows="10" placeholder="10.07.2026 / 10:00 - 11:00 Uhr / effektiv 60 min / MM / Support / Kunde / Ansprechpartner&#10;Anfrage / Maßnahme&#10;&#10;11.07.2026 / 13:00 - 14:00 Uhr / effektiv 60 min / MM / Support / Kunde 2 / Ansprechpartner 2&#10;Anfrage / Maßnahme"></textarea>
+      <textarea id="importPasteText" rows="10" placeholder="10.07.2026 / 10:00 - 11:00 Uhr / eff. 60 min / MM / Support / Kunde / Ansprechpartner&#10;Anfrage / Maßnahme&#10;&#10;11.07.2026 / 13:00 - 14:00 Uhr / eff. 60 min / MM / Support / Kunde 2 / Ansprechpartner 2&#10;Anfrage / Maßnahme"></textarea>
     </div>
     <div class="actions">
       <button class="btn-ghost" id="importPasteCancelBtn" style="flex:1;">Abbrechen</button>
@@ -1989,6 +2156,7 @@
       <h2 id="entryDetailDate">–</h2>
       <span class="entry-detail-badge" id="entryDetailDoneBadge" style="display:none;">✓ Erledigt</span>
       <span class="entry-detail-badge entry-detail-draft-badge" id="entryDetailDraftBadge" style="display:none;">📝 Entwurf</span>
+      <span class="entry-detail-badge entry-detail-terra-badge" id="entryDetailTerraBadge" style="display:none;">🚐 TERRA vor-Ort</span>
     </div>
 
     <div class="entry-detail-grid">
@@ -2067,7 +2235,7 @@
   const ACCENT_COLOR_KEY = 'accentColorPreference';
   const FONT_SIZE_KEY = 'fontSizePreference';
 
-  const APP_VERSION = '2.9.5';
+  const APP_VERSION = '2.12.0';
   const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
   const UPDATE_HTML_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/zeiterfassung.html';
   const UPDATE_HANDLE_KEY = 'updateFileHandle';
@@ -3347,10 +3515,10 @@
   }
 
   // Wandelt den Effektiv-Wert (egal ob "01:30" oder "1.5" eingegeben wurde) in
-  // eine einheitliche Minutenangabe für den Fließtext um, z. B. "effektiv 90 min".
+  // eine einheitliche Minutenangabe für den Fließtext um, z. B. "eff. 90 min".
   function effektivLabel(effektivStr){
     const totalMinutes = Math.round(parseEffektivToHours(effektivStr) * 60);
-    return `effektiv ${totalMinutes} min`;
+    return `eff. ${totalMinutes} min`;
   }
 
   function formatEntry(e){
@@ -3375,6 +3543,11 @@
     if(verbrauchtItems.length > 0){
       result += '\n\nVerbraucht:\n' + formatVerbrauchtItems(verbrauchtItems);
     }
+
+    if(e.terraVorOrt){
+      result = '+++TERRA vor-Ort Service+++\n\n' + result;
+    }
+
     return result;
   }
 
@@ -3422,7 +3595,8 @@
       ansprechpartner: el('ansprechpartner').value.trim(),
       anfrage: el('anfrage').value.trim(),
       massnahme: el('massnahme').value.trim(),
-      verbrauchtItems: getVerbrauchtItemsFromForm()
+      verbrauchtItems: getVerbrauchtItemsFromForm(),
+      terraVorOrt: el('terraVorOrt').checked
     };
   }
 
@@ -3436,6 +3610,7 @@
     el('anfrage').value = '';
     el('massnahme').value = '';
     resetVerbrauchtList();
+    el('terraVorOrt').checked = false;
     zeitenList.querySelector('.zeit-von').focus();
   }
 
@@ -3479,6 +3654,7 @@
     el('anfrage').value = entry.anfrage || '';
     el('massnahme').value = entry.massnahme || '';
     setVerbrauchtItems(entry);
+    el('terraVorOrt').checked = !!entry.terraVorOrt;
 
     el('editBanner').style.display = 'flex';
     el('saveBtn').textContent = '💾 Änderungen speichern';
@@ -3538,7 +3714,8 @@
       ansprechpartner: el('ansprechpartner').value.trim(),
       anfrage: el('anfrage').value.trim(),
       massnahme: el('massnahme').value.trim(),
-      verbrauchtItems: getVerbrauchtItemsFromForm()
+      verbrauchtItems: getVerbrauchtItemsFromForm(),
+      terraVorOrt: el('terraVorOrt').checked
     };
   }
 
@@ -3609,6 +3786,7 @@
     el('anfrage').value = draft.anfrage || '';
     el('massnahme').value = draft.massnahme || '';
     setVerbrauchtItems(draft);
+    el('terraVorOrt').checked = !!draft.terraVorOrt;
 
     el('draftBanner').style.display = 'flex';
     el('saveBtn').textContent = '📋 Fertigstellen & Speichern';
@@ -3810,10 +3988,13 @@
       }
     });
 
-    // Effektiv, Variante "effektiv X min"
+    // Effektiv, Variante "effektiv X min" bzw. "eff. X min"
+    // Akzeptiert die ausgeschriebene Form ("effektiv") ebenso wie die abgekürzte
+    // ("eff." / "eff"), damit ein kopierter Fließtext (nutzt jetzt "eff.") und
+    // ältere/manuell getippte Texte ("effektiv") gleichermaßen erkannt werden.
     parts1.forEach((part, idx) => {
       if(used.has(idx)) return;
-      const m = part.match(/effektiv\s+(\d+)\s*min/i);
+      const m = part.match(/eff(?:ektiv)?\.?\s*(\d+)\s*min/i);
       if(m){
         const totalMin = parseInt(m[1], 10);
         result.effektiv = String(Math.floor(totalMin/60)).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
@@ -4449,6 +4630,57 @@
     el('kundeList').innerHTML = kunden.map(k=>`<option value="${escapeHtml(k)}">`).join('');
   }
 
+  // Befüllt die Filter-Dropdowns (Kürzel/Kunde) aus den vorhandenen Einträgen.
+  // Behält eine bereits getroffene Auswahl bei, falls der Wert noch existiert.
+  function updateFilterDropdowns(){
+    const kuerzelSel = el('filterKuerzel');
+    const kundeSel = el('filterKunde');
+    const currentKuerzel = kuerzelSel.value;
+    const currentKunde = kundeSel.value;
+
+    const kuerzelOptions = [...new Set(entries.map(e => e.kuerzel).filter(Boolean))].sort();
+    kuerzelSel.innerHTML = '<option value="">Alle Kürzel</option>'
+      + kuerzelOptions.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
+    if(kuerzelOptions.includes(currentKuerzel)) kuerzelSel.value = currentKuerzel;
+
+    const kundeOptions = [...new Set(entries.map(e => e.kunde).filter(Boolean))].sort();
+    kundeSel.innerHTML = '<option value="">Alle Kunden</option>'
+      + kundeOptions.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
+    if(kundeOptions.includes(currentKunde)) kundeSel.value = currentKunde;
+  }
+
+  function updateFilterActiveBadge(){
+    const activeCount = [el('filterKuerzel').value, el('filterKunde').value, el('filterStatus').value]
+      .filter(v => v !== '').length;
+    const badge = el('filterActiveBadge');
+    if(activeCount > 0){
+      badge.textContent = String(activeCount);
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  el('filterToggleBtn').addEventListener('click', ()=>{
+    const panel = el('tableFilters');
+    panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+  });
+
+  el('filterResetBtn').addEventListener('click', ()=>{
+    el('filterKuerzel').value = '';
+    el('filterKunde').value = '';
+    el('filterStatus').value = '';
+    currentPage = 1;
+    renderTable();
+  });
+
+  ['filterKuerzel', 'filterKunde', 'filterStatus'].forEach(id=>{
+    el(id).addEventListener('change', ()=>{
+      currentPage = 1;
+      renderTable();
+    });
+  });
+
   function updateAnsprechpartnerDatalist(){
     const namen = [...new Set(entries.map(e=>e.ansprechpartner).filter(Boolean))].sort();
     el('ansprechpartnerList').innerHTML = namen.map(n=>`<option value="${escapeHtml(n)}">`).join('');
@@ -4720,12 +4952,19 @@
 
   function renderTable(){
     const term = el('searchInput').value.trim().toLowerCase();
-    // Die Suche filtert IMMER über alle Einträge - Pagination betrifft nur die Anzeige danach.
+    const filterKuerzel = el('filterKuerzel').value;
+    const filterKunde = el('filterKunde').value;
+    const filterStatus = el('filterStatus').value;
+    // Die Suche/Filter filtern IMMER über alle Einträge - Pagination betrifft nur die Anzeige danach.
     // Im gruppierten Design wird immer nach Datum sortiert (Spalten-Sortierung ergibt dort keinen Sinn).
     const effectiveSortKey = tableViewMode === 'grouped' ? 'datum' : sortKey;
     const effectiveSortDir = tableViewMode === 'grouped' ? 'desc' : sortDir;
     const filtered = entries
       .filter(e => {
+        if(filterKuerzel && e.kuerzel !== filterKuerzel) return false;
+        if(filterKunde && e.kunde !== filterKunde) return false;
+        if(filterStatus === 'open' && e.erledigt) return false;
+        if(filterStatus === 'done' && !e.erledigt) return false;
         if(!term) return true;
         const verbrauchtNames = getVerbrauchtItems(e).map(it => it.name).join(' ');
         const haystack = [e.kunde, e.ansprechpartner, e.kuerzel, e.taetigkeit, e.anfrage, e.massnahme, verbrauchtNames, formatDate(e.datum)].join(' ').toLowerCase();
@@ -4787,6 +5026,8 @@
     updateSortHeaders();
     updateKundenDatalist();
     updateAnsprechpartnerDatalist();
+    updateFilterDropdowns();
+    updateFilterActiveBadge();
     renderRecentKundenChips();
     renderSummary();
     renderPaginationControls(totalPages, filtered.length);
@@ -4887,6 +5128,7 @@
     el('entryDetailDate').textContent = item.datum ? formatDate(item.datum) : (isDraft ? 'Ohne Datum' : '–');
     el('entryDetailDoneBadge').style.display = (!isDraft && item.erledigt) ? '' : 'none';
     el('entryDetailDraftBadge').style.display = isDraft ? '' : 'none';
+    el('entryDetailTerraBadge').style.display = item.terraVorOrt ? '' : 'none';
     el('entryDetailZeiten').textContent = zeitenToString(getZeitenOfEntry(item)) || '';
     el('entryDetailEffektiv').textContent = item.effektiv || '';
     el('entryDetailKuerzel').textContent = item.kuerzel || '';
@@ -5420,19 +5662,104 @@
   }
 
   // ---------- Bericht (Druck/PDF) ----------
+  // Baut eine Zeile aus Label + proportionalem Balken + Wert - für die Kürzel-/Kunden-
+  // Aufteilung im Bericht. maxMinutes verhindert Division durch 0 bei leeren Daten.
+  function reportBarRow(label, minutes, count, maxMinutes){
+    const dec = (minutes/60).toFixed(2).replace('.', ',');
+    const pct = maxMinutes > 0 ? Math.max(3, Math.round((minutes/maxMinutes)*100)) : 0;
+    return `<div class="report-bar-row">
+      <div class="report-bar-label" title="${escapeHtml(label)}">${escapeHtml(label)}</div>
+      <div class="report-bar-track"><div class="report-bar-fill" style="width:${pct}%;"></div></div>
+      <div class="report-bar-value">${escapeHtml(dec)} Std. · ${count} Eintr${count===1?'ag':'äge'}</div>
+    </div>`;
+  }
+
   function buildReportHTML(period, byKuerzel, totalMinutes, count){
     const rows = period.matching.slice().sort((a,b)=>
       (a.datum||'').localeCompare(b.datum||'') || (a.createdAt||0)-(b.createdAt||0)
     );
     const totalDec = (totalMinutes/60).toFixed(2).replace('.', ',');
-    const breakdownRows = Object.keys(byKuerzel).sort().map(k=>{
-      const info = byKuerzel[k];
-      const dec = (info.minutes/60).toFixed(2).replace('.', ',');
-      return `<tr><td>${escapeHtml(k)}</td><td>${escapeHtml(dec)} Std.</td><td>${info.count}</td></tr>`;
-    }).join('');
-    const entryRows = rows.map(e => `
+
+    const elapsedDays = getElapsedDaysInPeriod(period.from, period.to, period.matching);
+    const avgMinutesPerDay = elapsedDays > 0 ? totalMinutes / elapsedDays : 0;
+    const avgDec = (avgMinutesPerDay/60).toFixed(2).replace('.', ',');
+
+    // Aufteilung nach Kürzel (übergeben) und zusätzlich nach Kunde (hier berechnet)
+    const byKunde = {};
+    period.matching.forEach(e=>{
+      const key = e.kunde || '—';
+      const minutes = parseEffektivToHours(e.effektiv) * 60;
+      if(!byKunde[key]) byKunde[key] = { minutes: 0, count: 0 };
+      byKunde[key].minutes += minutes;
+      byKunde[key].count += 1;
+    });
+
+    const maxKuerzelMinutes = Math.max(0, ...Object.values(byKuerzel).map(v => v.minutes));
+    const kuerzelBars = Object.keys(byKuerzel).sort().map(k =>
+      reportBarRow(k, byKuerzel[k].minutes, byKuerzel[k].count, maxKuerzelMinutes)
+    ).join('');
+
+    const maxKundeMinutes = Math.max(0, ...Object.values(byKunde).map(v => v.minutes));
+    const kundeBars = Object.keys(byKunde).sort().map(k =>
+      reportBarRow(k, byKunde[k].minutes, byKunde[k].count, maxKundeMinutes)
+    ).join('');
+
+    // Tages-Chart: nur bei überschaubarer Anzahl Tage sinnvoll lesbar (sonst zu viele,
+    // zu dünne Balken) - wird bei längeren freien Zeiträumen einfach weggelassen.
+    const dayCount = Math.round((new Date(period.to+'T00:00:00') - new Date(period.from+'T00:00:00')) / 86400000) + 1;
+    let dailyChartHTML = '';
+    if(dayCount >= 2 && dayCount <= 45){
+      const minutesByDay = {};
+      period.matching.forEach(e=>{
+        if(!e.datum) return;
+        minutesByDay[e.datum] = (minutesByDay[e.datum] || 0) + parseEffektivToHours(e.effektiv) * 60;
+      });
+      const days = [];
+      for(let d = new Date(period.from+'T00:00:00'); localISODate(d) <= period.to; d.setDate(d.getDate()+1)){
+        days.push(localISODate(d));
+      }
+      const maxDayMinutes = Math.max(1, ...days.map(d => minutesByDay[d] || 0));
+      const showDayNumberOnly = dayCount > 10;
+      const cells = days.map(d=>{
+        const minutes = minutesByDay[d] || 0;
+        const heightPct = minutes > 0 ? Math.max(4, Math.round((minutes/maxDayMinutes)*100)) : 0;
+        const dateObj = new Date(d+'T00:00:00');
+        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+        const label = showDayNumberOnly ? String(dateObj.getDate()) : WEEKDAY_LABELS[(dateObj.getDay()+6)%7] + ' ' + dateObj.getDate();
+        return `<div class="report-daily-col">
+          <div class="report-daily-bar-track"><div class="report-daily-bar${isWeekend?' weekend':''}" style="height:${heightPct}%;"></div></div>
+          <span class="report-daily-label">${escapeHtml(label)}</span>
+        </div>`;
+      }).join('');
+      dailyChartHTML = `<h2>Tagesübersicht</h2><div class="report-daily-chart">${cells}</div>`;
+    }
+
+    // Verbrauchte Gegenstände über den ganzen Zeitraum aufsummiert (gleicher Name = addiert)
+    const verbrauchtTotals = {};
+    period.matching.forEach(e=>{
+      getVerbrauchtItems(e).forEach(it=>{
+        if(!it.name) return;
+        verbrauchtTotals[it.name] = (verbrauchtTotals[it.name] || 0) + (parseFloat(it.qty) || 0);
+      });
+    });
+    const verbrauchtKeys = Object.keys(verbrauchtTotals).sort();
+    const verbrauchtHTML = verbrauchtKeys.length > 0 ? `
+      <h2>Verbrauchte Gegenstände</h2>
+      <table>
+        <thead><tr><th>Gegenstand</th><th>Menge gesamt</th></tr></thead>
+        <tbody>${verbrauchtKeys.map(k => `<tr><td>${escapeHtml(k)}</td><td>${verbrauchtTotals[k]}x</td></tr>`).join('')}</tbody>
+      </table>
+    ` : '';
+
+    const entryRows = rows.map(e => {
+      const statusIcons = [
+        e.terraVorOrt ? '🚐' : '',
+        e.erledigt ? '✓' : ''
+      ].filter(Boolean).join(' ');
+      return `
       <tr>
         <td>${escapeHtml(formatDate(e.datum))}</td>
+        <td class="report-status-icon">${statusIcons}</td>
         <td>${escapeHtml(zeitenToString(getZeitenOfEntry(e)))}</td>
         <td>${escapeHtml(e.effektiv)}</td>
         <td>${escapeHtml(e.kuerzel)}</td>
@@ -5442,28 +5769,45 @@
         <td>${escapeHtml(e.anfrage)}</td>
         <td>${escapeHtml(e.massnahme)}</td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
+
+    const hasAnyStatusIcon = rows.some(e => e.terraVorOrt || e.erledigt);
 
     return `
-      <p class="report-brand">Chronos</p>
-      <h1>Zeiterfassungsbericht</h1>
-      <p class="report-meta">Zeitraum: ${escapeHtml(period.label)} &nbsp;·&nbsp; Erstellt am ${escapeHtml(formatDate(localISODate()))}</p>
-      <div class="report-summary">
-        <div><strong>${escapeHtml(totalDec)} Std.</strong><span>Gesamt (${escapeHtml(minutesToHHMM(totalMinutes))})</span></div>
-        <div><strong>${count}</strong><span>Einträge</span></div>
+      <div class="report-header">
+        <div>
+          <p class="report-brand">Chronos</p>
+          <h1>Zeiterfassungsbericht</h1>
+          <p class="report-meta">Zeitraum: ${escapeHtml(period.label)}</p>
+        </div>
+        <div class="report-generated">Erstellt am<br>${escapeHtml(formatDate(localISODate()))}</div>
       </div>
-      <h2>Aufteilung nach Kürzel</h2>
-      <table>
-        <thead><tr><th>Kürzel</th><th>Stunden</th><th>Einträge</th></tr></thead>
-        <tbody>${breakdownRows || '<tr><td colspan="3">Keine Daten</td></tr>'}</tbody>
-      </table>
+      <div class="report-summary">
+        <div class="report-stat"><strong>${escapeHtml(totalDec)} Std.</strong><span>Gesamt (${escapeHtml(minutesToHHMM(totalMinutes))})</span></div>
+        <div class="report-stat"><strong>${count}</strong><span>Einträge</span></div>
+        <div class="report-stat"><strong>${escapeHtml(avgDec)} Std.</strong><span>Ø pro Tag (${elapsedDays} Tage)</span></div>
+      </div>
+      ${dailyChartHTML}
+      <div class="report-two-col">
+        <div>
+          <h2>Aufteilung nach Kürzel</h2>
+          <div class="report-bars">${kuerzelBars || '<p style="font-size:11px;color:#999;">Keine Daten</p>'}</div>
+        </div>
+        <div>
+          <h2>Aufteilung nach Kunde</h2>
+          <div class="report-bars">${kundeBars || '<p style="font-size:11px;color:#999;">Keine Daten</p>'}</div>
+        </div>
+      </div>
+      ${verbrauchtHTML}
       <h2>Einträge</h2>
       <table>
         <thead>
-          <tr><th>Datum</th><th>Zeit</th><th>Effektiv</th><th>Kürzel</th><th>Tätigkeit</th><th>Kunde</th><th>Ansprechpartner</th><th>Anfrage</th><th>Maßnahme</th></tr>
+          <tr><th>Datum</th><th></th><th>Zeit</th><th>Effektiv</th><th>Kürzel</th><th>Tätigkeit</th><th>Kunde</th><th>Ansprechpartner</th><th>Anfrage</th><th>Maßnahme</th></tr>
         </thead>
-        <tbody>${entryRows || '<tr><td colspan="9">Keine Einträge in diesem Zeitraum.</td></tr>'}</tbody>
+        <tbody>${entryRows || '<tr><td colspan="10">Keine Einträge in diesem Zeitraum.</td></tr>'}</tbody>
       </table>
+      <div class="report-footer">Erstellt mit Chronos${hasAnyStatusIcon ? ' · 🚐 = TERRA vor-Ort · ✓ = Erledigt' : ''}</div>
     `;
   }
 
