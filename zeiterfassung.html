@@ -1755,7 +1755,7 @@
           <label for="massnahme">Durchgeführte Maßnahme</label>
           <span class="info-dot" title="Was konkret unternommen wurde, um die Anfrage bzw. den Fehler zu bearbeiten. Beispiel: „Netzwerkkabel getauscht und Verbindung neu getestet“."><svg class="info-dot-icon" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="10.5" r="2.3"/><rect x="13.6" y="14.5" width="4.8" height="12.3" rx="2.4"/></svg></span>
         </div>
-        <textarea id="massnahme" rows="2"></textarea>
+        <textarea id="massnahme" rows="2" spellcheck="true" lang="de"></textarea>
       </div>
       <div class="field">
         <div class="field-label-row">
@@ -2043,6 +2043,9 @@
       <details>
         <summary>Was ist neu? (Verlauf anzeigen)</summary>
         <ul class="changelog-list">
+          <li><strong>2.16.1</strong> – Automatische Korrektur bei zwei Großbuchstaben am Wortanfang wieder entfernt; Rechtschreibprüfung per Rechtsklick im Maßnahme-Feld bleibt aktiv</li>
+          <li><strong>2.16.0</strong> – Feld „Durchgeführte Maßnahme": Rechtschreibprüfung per Rechtsklick aktiviert und automatische Korrektur bei zwei Großbuchstaben am Wortanfang (z.B. „DAs" → „Das"), wie in Word</li>
+          <li><strong>2.15.0</strong> – Ø-Berechnung pro Tag: Samstag/Sonntag zählen nicht mehr als eigener Tag, auch nicht bei Arbeit an diesem Tag; die geleistete Zeit fließt aber weiterhin in die Gesamtstunden ein</li>
           <li><strong>2.14.0</strong> – Pfeile ‹ › neben dem Datumsfeld der Übersicht: schnell einen Monat/eine Woche/einen Tag vor und zurück blättern</li>
           <li><strong>2.13.0</strong> – Kopierter Fließtext nutzt „eff." statt „effektiv"; Import erkennt weiterhin beide Schreibweisen</li>
           <li><strong>2.12.0</strong> – PDF-Bericht deutlich erweitert: Tages-Chart, Aufteilung nach Kunde, Ø pro Tag, verbrauchte Gegenstände, Status-Icons</li>
@@ -2253,7 +2256,7 @@
   const ACCENT_COLOR_KEY = 'accentColorPreference';
   const FONT_SIZE_KEY = 'fontSizePreference';
 
-  const APP_VERSION = '2.14.0';
+  const APP_VERSION = '2.16.1';
   const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
   const UPDATE_HTML_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/zeiterfassung.html';
   const UPDATE_HANDLE_KEY = 'updateFileHandle';
@@ -5328,26 +5331,22 @@
   }
 
   // Anzahl der für den Ø-Wert zu zählenden Tage innerhalb eines Zeitraums:
-  // Wochentage (Mo-Fr) zählen immer (kappt am heutigen Tag, falls das Ende in der Zukunft liegt).
-  // Samstag/Sonntag zählen dagegen nur, wenn an genau diesem Tag tatsächlich gearbeitet wurde
-  // (mind. ein Eintrag mit Effektiv-Zeit > 0) - freie Wochenenden ziehen den Tagesdurchschnitt
-  // damit nicht mehr künstlich nach unten.
-  function getElapsedDaysInPeriod(fromDateStr, toDateStr, matchingEntries){
+  // Nur Wochentage (Mo-Fr) zählen als eigener Tag (kappt am heutigen Tag, falls das
+  // Ende in der Zukunft liegt). Samstag und Sonntag zählen NIE als eigener Tag - auch
+  // nicht, wenn an diesem Tag gearbeitet wurde. Die an Wochenenden geleistete Zeit fließt
+  // trotzdem ganz normal in die Gesamtstunden (den Zähler) ein, sie kommt also "on top"
+  // oben drauf, ohne den Nenner (Anzahl Tage) zu erhöhen und den Durchschnitt zu drücken.
+  function getElapsedDaysInPeriod(fromDateStr, toDateStr){
     const todayStr = localISODate();
     const effectiveToStr = toDateStr < todayStr ? toDateStr : todayStr;
     if(effectiveToStr < fromDateStr) return 0;
-
-    const workedDays = new Set();
-    (matchingEntries || []).forEach(e=>{
-      if(e.datum && parseEffektivToHours(e.effektiv) > 0) workedDays.add(e.datum);
-    });
 
     const fromDate = new Date(fromDateStr + 'T00:00:00');
     const effectiveToDate = new Date(effectiveToStr + 'T00:00:00');
     let count = 0;
     for(let d = new Date(fromDate); d <= effectiveToDate; d.setDate(d.getDate() + 1)){
       const isWeekend = d.getDay() === 0 || d.getDay() === 6; // 0=So, 6=Sa
-      if(!isWeekend || workedDays.has(localISODate(d))) count++;
+      if(!isWeekend) count++;
     }
     return count;
   }
@@ -5673,7 +5672,7 @@
     el('summaryTotalHours').textContent = `${totalHoursDecimal} Std. (${minutesToHHMM(totalMinutes)})`;
     el('summaryCount').textContent = String(count);
 
-    const elapsedDays = getElapsedDaysInPeriod(period.from, period.to, period.matching);
+    const elapsedDays = getElapsedDaysInPeriod(period.from, period.to);
     const avgMinutesPerDay = elapsedDays > 0 ? totalMinutes / elapsedDays : 0;
     const avgDecimal = (avgMinutesPerDay/60).toFixed(2).replace('.', ',');
     el('summaryAvgPerDay').textContent = `${avgDecimal} Std.`;
@@ -5736,7 +5735,7 @@
     );
     const totalDec = (totalMinutes/60).toFixed(2).replace('.', ',');
 
-    const elapsedDays = getElapsedDaysInPeriod(period.from, period.to, period.matching);
+    const elapsedDays = getElapsedDaysInPeriod(period.from, period.to);
     const avgMinutesPerDay = elapsedDays > 0 ? totalMinutes / elapsedDays : 0;
     const avgDec = (avgMinutesPerDay/60).toFixed(2).replace('.', ',');
 
