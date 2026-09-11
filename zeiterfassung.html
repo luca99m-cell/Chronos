@@ -320,10 +320,7 @@
 
   #formCard{width:400px;flex-shrink:0;min-width:280px;}
   #historyCard{flex:1;min-width:380px;}
-  #draftsCard{width:100%;}
 
-  .drafts-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
-  .drafts-header h3{margin:0;font-size:16px;}
   .drafts-hint{font-size:12.5px;color:var(--muted);margin:0 0 14px;}
   .draft-row{
     display:flex;
@@ -732,6 +729,33 @@
   }
   .michel-egg-face{font-size:40px;flex-shrink:0;line-height:1;}
   .michel-egg-text{font-size:13.5px;color:var(--text);line-height:1.4;font-weight:600;}
+
+  /* Schwebender Button unten rechts, zeigt die Anzahl offener Entwürfe und öffnet
+     das Entwürfe-Panel. Nur sichtbar, wenn tatsächlich Entwürfe vorhanden sind -
+     kein verschenkter Platz mehr, wenn die Funktion nicht genutzt wird. */
+  .drafts-fab{
+    position:fixed;
+    bottom:24px;right:20px;
+    display:none;
+    align-items:center;
+    gap:7px;
+    padding:12px 18px;
+    border-radius:999px;
+    background:var(--primary);
+    color:#fff;
+    font-size:14px;
+    font-weight:700;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+    z-index:90;
+  }
+  .drafts-fab.visible{display:inline-flex;}
+  .drafts-fab:hover{background:var(--primary-dark);}
+  .drafts-fab-count{
+    background:rgba(255,255,255,0.25);
+    border-radius:999px;
+    padding:1px 8px;
+    font-size:12.5px;
+  }
 
   /* Übersicht (Monat / Zeitraum) */
   .summary-block{
@@ -1212,7 +1236,7 @@
   }
 
   /* Einstellungen Modal */
-  #settingsOverlay, #importPasteOverlay, #importReviewOverlay, #importBulkReviewOverlay, #entryDetailOverlay{
+  #settingsOverlay, #importPasteOverlay, #importReviewOverlay, #importBulkReviewOverlay, #entryDetailOverlay, #draftsOverlay{
     position:fixed;inset:0;
     background:var(--overlay-backdrop);
     display:none;
@@ -1222,8 +1246,8 @@
     padding:40px 20px;
     overflow-y:auto;
   }
-  #settingsOverlay.visible, #importPasteOverlay.visible, #importReviewOverlay.visible, #importBulkReviewOverlay.visible, #entryDetailOverlay.visible{display:flex;}
-  #settingsOverlay .box, #importPasteOverlay .box, #importReviewOverlay .box, #importBulkReviewOverlay .box, #entryDetailOverlay .box{
+  #settingsOverlay.visible, #importPasteOverlay.visible, #importReviewOverlay.visible, #importBulkReviewOverlay.visible, #entryDetailOverlay.visible, #draftsOverlay.visible{display:flex;}
+  #settingsOverlay .box, #importPasteOverlay .box, #importReviewOverlay .box, #importBulkReviewOverlay .box, #entryDetailOverlay .box, #draftsOverlay .box{
     background:var(--card);
     border-radius:16px;
     padding:28px;
@@ -1245,7 +1269,7 @@
   }
   #importPasteOverlay .field{flex:1;display:flex;flex-direction:column;min-height:0;}
   #importPasteText{flex:1;resize:none;min-height:120px;}
-  #settingsOverlay h2, #importPasteOverlay h2, #importReviewOverlay h2, #importBulkReviewOverlay h2, #entryDetailOverlay h2{margin-top:0;font-size:19px;}
+  #settingsOverlay h2, #importPasteOverlay h2, #importReviewOverlay h2, #importBulkReviewOverlay h2, #entryDetailOverlay h2, #draftsOverlay h2{margin-top:0;font-size:19px;}
   #settingsOverlay h4{font-size:13.5px;margin:22px 0 8px;color:var(--text);border-top:1px solid var(--border);padding-top:16px;}
   #settingsOverlay h4:first-of-type{border-top:none;padding-top:0;margin-top:0;}
   .about-section{
@@ -1289,6 +1313,176 @@
   #importBulkReviewOverlay .box.bulk-review-box{max-width:980px;}
 
   #entryDetailOverlay .box.entry-detail-box{max-width:620px;}
+  #draftsOverlay h2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  #draftsOverlay .box{max-height:86vh;max-width:900px;display:flex;flex-direction:column;}
+  /* Vollbild-Modus: das Panel wird per Button unterhalb des (sticky) Headers auf die
+     volle restliche Fläche aufgezogen, statt als kleines zentriertes Fenster zu
+     schweben - praktisch für den Notizzettel, wenn mehr Platz zum Zeichnen/Schreiben
+     gebraucht wird. Der genaue "top"-Wert wird per JS anhand der tatsächlichen
+     Header-Höhe gesetzt (siehe toggleDraftsFullscreen), da der Header umbrechen kann.
+  */
+  #draftsOverlay.drafts-fullscreen{
+    padding:0;
+    align-items:stretch;
+    justify-content:stretch;
+  }
+  #draftsOverlay.drafts-fullscreen .box{
+    max-width:none;
+    width:100%;
+    max-height:none;
+    height:100%;
+    border-radius:0;
+    box-shadow:none;
+  }
+  #draftsTabPane{display:flex;flex-direction:column;flex:1;min-height:0;}
+  #draftsOverlay #draftsList{overflow-y:auto;flex:1;min-height:0;}
+  #notizenTabPane{display:flex;flex-direction:column;min-height:0;flex:1;overflow-y:auto;}
+  .notizen-draw-toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .notizen-draw-toolbar input[type="color"]{
+    width:36px;height:32px;padding:2px;border:1px solid var(--border);border-radius:8px;
+    background:var(--input-bg);cursor:pointer;
+  }
+  .notizen-draw-toolbar input[type="range"]{width:100px;accent-color:var(--primary);}
+  .notizen-draw-toolbar button{padding:7px 12px;font-size:13px;}
+  .notizen-draw-toolbar button.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+  /* Gemeinsame Fläche für Zeichnung UND Textfelder (wie in OneNote) - die Leinwand
+     nimmt Freihandstriche auf, die Textfelder liegen als eigene, frei verschiebbare
+     Elemente darüber. Welches Werkzeug per Klick etwas auslöst, steuert die Klasse
+     tool-draw/tool-text (nur fürs Aussehen des Mauszeigers - die eigentliche Logik
+     sitzt in JS). */
+  .notizen-canvas-wrap{
+    position:relative;
+    width:100%;
+    height:440px;
+    border:1px dashed var(--border);
+    border-radius:10px;
+    background:var(--input-bg);
+    overflow:hidden;
+    flex:1;
+    min-height:280px;
+  }
+  .notizen-canvas-wrap #notizenCanvas{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    touch-action:none;
+    display:block;
+  }
+  .notizen-canvas-wrap.tool-draw #notizenCanvas{cursor:crosshair;}
+  .notizen-canvas-wrap.tool-text #notizenCanvas{cursor:text;}
+  #notizenTextBoxLayer{position:absolute;inset:0;pointer-events:none;}
+  .notizen-textbox{
+    position:absolute;
+    pointer-events:auto;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:7px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.18);
+    min-width:130px;
+    min-height:60px;
+    display:flex;
+    flex-direction:column;
+  }
+  .notizen-textbox-handle{
+    height:15px;
+    flex-shrink:0;
+    cursor:move;
+    background:var(--table-header-bg);
+    border-radius:6px 6px 0 0;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding:0 3px;
+  }
+  .notizen-textbox-delete{
+    border:none;background:none;color:var(--muted);
+    font-size:11px;line-height:1;cursor:pointer;padding:1px 3px;border-radius:3px;
+  }
+  .notizen-textbox-delete:hover{color:#fff;background:var(--danger);}
+  .notizen-textbox-pin{
+    border:none;background:none;color:var(--muted);
+    font-size:11px;line-height:1;cursor:pointer;padding:1px 3px;border-radius:3px;
+  }
+  .notizen-textbox-pin:hover{background:rgba(0,0,0,0.12);}
+  .notizen-textbox-editor{
+    flex:1;
+    overflow:auto;
+    padding:6px 8px;
+    font-family:inherit;
+    font-size:13px;
+    line-height:1.4;
+    color:var(--text);
+    outline:none;
+  }
+  .notizen-textbox-editor:empty::before{
+    content:attr(data-placeholder);
+    color:var(--muted);
+  }
+  .notizen-textbox-pinned-placeholder{background:var(--btn-secondary-bg);}
+  .notizen-pinned-hint{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
+    padding:10px;
+  }
+  .notizen-pinned-hint button{font-size:12px;padding:5px 10px;}
+  .notizen-textbox-resize{
+    position:absolute;
+    right:0;
+    bottom:0;
+    width:16px;
+    height:16px;
+    cursor:nwse-resize;
+  }
+  .notizen-textbox-resize::before{
+    content:'';
+    position:absolute;
+    right:3px;
+    bottom:3px;
+    width:8px;
+    height:8px;
+    border-right:2px solid var(--muted);
+    border-bottom:2px solid var(--muted);
+    opacity:0.6;
+  }
+  #notizenTextToolbar select{
+    padding:6px 8px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:12.5px;
+    font-family:inherit;
+    background:var(--input-bg);
+    color:var(--text);
+  }
+  #notizenTextToolbar button{min-width:34px;}
+  .notizen-pip-editor-wrap{height:100vh;box-sizing:border-box;padding:10px;}
+  .notizen-pip-editor{
+    width:100%;height:100%;box-sizing:border-box;
+    outline:none;overflow:auto;
+    padding:8px;border-radius:8px;
+    background:var(--card);
+    color:var(--text);
+    font-family:inherit;font-size:13px;line-height:1.4;
+  }
+  .notizen-save-hint{
+    font-size:11.5px;
+    color:var(--muted);
+    text-align:right;
+    margin-top:6px;
+    min-height:14px;
+  }
   .entry-detail-header{
     display:flex;
     align-items:center;
@@ -1423,8 +1617,8 @@
     text-align:center;
     margin-top:4px;
   }
-  #settingsOverlay .actions, #importPasteOverlay .actions, #importReviewOverlay .actions, #importBulkReviewOverlay .actions, #entryDetailOverlay .actions{display:flex;gap:10px;margin-top:20px;}
-  #settingsOverlay .actions button, #importPasteOverlay .actions button, #importReviewOverlay .actions button, #importBulkReviewOverlay .actions button, #entryDetailOverlay .actions button{flex:1;padding:11px;}
+  #settingsOverlay .actions, #importPasteOverlay .actions, #importReviewOverlay .actions, #importBulkReviewOverlay .actions, #entryDetailOverlay .actions, #draftsOverlay .actions{display:flex;gap:10px;margin-top:20px;}
+  #settingsOverlay .actions button, #importPasteOverlay .actions button, #importReviewOverlay .actions button, #importBulkReviewOverlay .actions button, #entryDetailOverlay .actions button, #draftsOverlay .actions button{flex:1;padding:11px;}
   input[type="color"]{
     padding:3px;
     height:38px;
@@ -1888,15 +2082,6 @@
       </div>
     </div>
   </div>
-
-  <div class="card" id="draftsCard">
-    <div class="drafts-header">
-      <h3>📝 Entwürfe</h3>
-      <span class="count-badge" id="draftsCountBadge">0 Entwürfe</span>
-    </div>
-    <p class="drafts-hint">Unfertige Einträge zum späteren Weiterbearbeiten – stehen nicht in der Tabelle und fließen nicht in Übersicht oder Bericht ein. Klick auf einen Entwurf zeigt ihn vollständig.</p>
-    <div id="draftsList"></div>
-  </div>
 </main>
 
 <div id="overlay">
@@ -1953,6 +2138,13 @@
           <button type="button" class="mode-btn" id="tableViewClassicBtn" data-view="classic" style="flex:1;">Klassisch</button>
           <button type="button" class="mode-btn active" id="tableViewGroupedBtn" data-view="grouped" style="flex:1;">Gruppiert (neu)</button>
         </div>
+
+        <h4>🗒️ Notizzettel</h4>
+        <p style="margin-bottom:10px;">Zusätzlicher freier Bereich für Text oder Skizzen im Entwürfe-Panel, für alles, was sonst nirgends reinpasst. Wird in der Datei gespeichert und gilt daher für alle, die diese Datei verwenden.</p>
+        <label class="terra-checkbox-row" for="notizenEnabledCheckbox">
+          <input type="checkbox" id="notizenEnabledCheckbox">
+          Notizzettel im Entwürfe-Panel anzeigen
+        </label>
 
         <h4>🎨 Akzentfarbe</h4>
         <p style="margin-bottom:10px;">Persönliche Anzeige-Einstellung für diesen Browser – wird wie Dunkelmodus und Hintergrund <strong>nicht</strong> in der Datei gespeichert.</p>
@@ -2031,7 +2223,7 @@
 
     <div class="about-section">
       <h4 style="margin-top:0;border-top:none;padding-top:0;">ℹ️ Über Chronos</h4>
-      <p style="margin-bottom:8px;">Version <strong id="aboutVersionText">2.6.0</strong> · Zuletzt geändert: 24.07.2026</p>
+      <p style="margin-bottom:8px;">Version <strong id="aboutVersionText">2.6.0</strong> · Zuletzt geändert: <span id="aboutLastChangedText">24.07.2026</span></p>
       <button type="button" class="btn-ghost" id="checkUpdateBtn" style="width:100%;margin-bottom:10px;">🔄 Nach Updates suchen</button>
       <div class="update-target-row">
         <div>
@@ -2043,6 +2235,11 @@
       <details>
         <summary>Was ist neu? (Verlauf anzeigen)</summary>
         <ul class="changelog-list">
+          <li><strong>2.22.0</strong> – Zeitspannen werden automatisch chronologisch sortiert; Notizzettel: Text ist jetzt Standard-Werkzeug, echte Formatierung (Fett/Kursiv/Unterstrichen, Schriftart/-größe), Textfelder per 📌 als eigenes, immer sichtbares Fenster anpinnbar</li>
+          <li><strong>2.21.0</strong> – Entwürfe-Panel im Vollbild: kleines ✕ statt großem Schließen-Button, dazu ein "⏱️ Zeiterfassung"-Button zum kurzen Wechsel zur Hauptansicht, ohne das Vollbild zu verlassen</li>
+          <li><strong>2.20.0</strong> – Notizzettel: Löschen-Button an Textfeldern repariert (ging bisher nicht) und Größe jetzt per Ziehen am Eck änderbar; Entwürfe-Panel per ⛶-Button auf Vollbild unterhalb des Headers aufziehbar</li>
+          <li><strong>2.19.0</strong> – Neuer Notizzettel im Entwürfe-Panel: Zeichnung und frei platzierbare Textfelder in einer Fläche (wie in OneNote), automatisch gespeichert, per Einstellung an-/abschaltbar</li>
+          <li><strong>2.17.0</strong> – Entwürfe überarbeitet: statt einer immer sichtbaren Karte am Seitenende jetzt ein schwebender Button (nur bei offenen Entwürfen sichtbar), der die Liste als Panel öffnet</li>
           <li><strong>2.16.1</strong> – Automatische Korrektur bei zwei Großbuchstaben am Wortanfang wieder entfernt; Rechtschreibprüfung per Rechtsklick im Maßnahme-Feld bleibt aktiv</li>
           <li><strong>2.16.0</strong> – Feld „Durchgeführte Maßnahme": Rechtschreibprüfung per Rechtsklick aktiviert und automatische Korrektur bei zwei Großbuchstaben am Wortanfang (z.B. „DAs" → „Das"), wie in Word</li>
           <li><strong>2.15.0</strong> – Ø-Berechnung pro Tag: Samstag/Sonntag zählen nicht mehr als eigener Tag, auch nicht bei Arbeit an diesem Tag; die geleistete Zeit fließt aber weiterhin in die Gesamtstunden ein</li>
@@ -2232,6 +2429,71 @@
   </div>
 </div>
 
+<div id="draftsOverlay">
+  <div class="box">
+    <h2>📝 Entwürfe <span class="count-badge" id="draftsCountBadge">0 Entwürfe</span>
+      <span style="flex:1;"></span>
+      <button type="button" class="btn-ghost" id="draftsPeekBtn" title="Kurz zur Zeiterfassung wechseln" style="display:none;padding:4px 10px;font-size:13px;">⏱️ Zeiterfassung</button>
+      <button type="button" class="btn-ghost" id="draftsFullscreenBtn" title="Vollbild (unterhalb des Headers)" style="padding:4px 10px;font-size:14px;">⛶</button>
+      <button type="button" class="btn-ghost" id="draftsCloseXBtn" title="Schließen" style="display:none;padding:2px 9px;font-size:16px;">✕</button>
+    </h2>
+
+    <div class="summary-mode-toggle" id="draftsPanelTabs" style="display:none;margin-bottom:14px;">
+      <button type="button" class="mode-btn active" id="draftsTabBtn" style="flex:1;">📝 Entwürfe</button>
+      <button type="button" class="mode-btn" id="notizenTabBtn" style="flex:1;">🗒️ Notizzettel</button>
+    </div>
+
+    <div id="draftsTabPane">
+      <p class="drafts-hint">Unfertige Einträge zum späteren Weiterbearbeiten – stehen nicht in der Tabelle und fließen nicht in Übersicht oder Bericht ein. Klick auf einen Entwurf zeigt ihn vollständig.</p>
+      <div id="draftsList"></div>
+    </div>
+
+    <div id="notizenTabPane" style="display:none;">
+      <p class="drafts-hint">Freier Platz für alles, was sonst nirgends reinpasst – zeichne und schreibe im selben Bereich. Mit "🔤 Text" irgendwo hinklicken erzeugt dort ein Textfeld. Wird zusammen mit den restlichen Daten in der Datei gespeichert.</p>
+      <div class="summary-mode-toggle" style="margin-bottom:10px;">
+        <button type="button" class="mode-btn" id="notizenToolDrawBtn" style="flex:1;">🖊️ Zeichnen</button>
+        <button type="button" class="mode-btn active" id="notizenToolTextBtn" style="flex:1;">🔤 Text</button>
+      </div>
+      <div class="notizen-draw-toolbar" id="notizenDrawToolbar" style="display:none;">
+        <input type="color" id="notizenColorPicker" value="#2563eb" title="Stiftfarbe">
+        <input type="range" id="notizenBrushSize" min="1" max="20" value="3" title="Strichstärke">
+        <button type="button" class="btn-ghost" id="notizenEraserBtn" title="Radierer">🧹 Radierer</button>
+        <button type="button" class="btn-ghost" id="notizenClearBtn" title="Zeichnung leeren">🗑️ Leeren</button>
+      </div>
+      <div class="notizen-draw-toolbar" id="notizenTextToolbar">
+        <button type="button" class="btn-ghost" id="notizenBoldBtn" title="Fett"><b>F</b></button>
+        <button type="button" class="btn-ghost" id="notizenItalicBtn" title="Kursiv"><i>K</i></button>
+        <button type="button" class="btn-ghost" id="notizenUnderlineBtn" title="Unterstrichen"><u>U</u></button>
+        <select id="notizenFontFamily" title="Schriftart">
+          <option value="">Standard</option>
+          <option value="Georgia, serif">Serif</option>
+          <option value="'Courier New', monospace">Monospace</option>
+          <option value="'Comic Sans MS', cursive">Handschrift</option>
+        </select>
+        <select id="notizenFontSize" title="Schriftgröße">
+          <option value="2">Klein</option>
+          <option value="3" selected>Normal</option>
+          <option value="5">Groß</option>
+          <option value="7">Sehr groß</option>
+        </select>
+      </div>
+      <div class="notizen-canvas-wrap tool-text" id="notizenCanvasWrap">
+        <canvas id="notizenCanvas"></canvas>
+        <div id="notizenTextBoxLayer"></div>
+      </div>
+      <div class="notizen-save-hint" id="notizenSaveHint"></div>
+    </div>
+
+    <div class="actions" id="draftsOverlayActions">
+      <button type="button" class="btn-primary" id="draftsOverlayCloseBtn" style="flex:1;">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<button type="button" class="drafts-fab" id="draftsFab" title="Entwürfe öffnen">
+  📝 <span class="drafts-fab-count" id="draftsFabCount">0</span>
+</button>
+
 <div class="toast" id="toast">Kopiert &amp; Gespeichert!</div>
 <div class="michel-egg" id="michelEgg">
   <div class="michel-egg-face">😎</div>
@@ -2256,7 +2518,8 @@
   const ACCENT_COLOR_KEY = 'accentColorPreference';
   const FONT_SIZE_KEY = 'fontSizePreference';
 
-  const APP_VERSION = '2.16.1';
+  const APP_VERSION = '2.22.0';
+  const APP_LAST_CHANGED = '10.09.2026'; // manuell mit jeder Versionsänderung mitpflegen
   const UPDATE_VERSION_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/version.json';
   const UPDATE_HTML_URL = 'https://raw.githubusercontent.com/luca99m-cell/Chronos/main/zeiterfassung.html';
   const UPDATE_HANDLE_KEY = 'updateFileHandle';
@@ -2264,7 +2527,8 @@
   let fileHandle = null;
   let entries = [];
   let drafts = []; // unfertige Einträge - separat von entries, zählen nicht in Tabelle/Übersicht/Bericht
-  let settings = {}; // { vorname, nachname, kuerzel, taetigkeiten: [], templates: [], formColumnWidth }
+  let notizen = { drawing: null, textBoxes: [] }; // freier Notizzettel (Zeichnung + verschiebbare Textfelder), siehe Entwürfe-Panel
+  let settings = {}; // { vorname, nachname, kuerzel, taetigkeiten: [], templates: [], formColumnWidth, notizenEnabled }
   let tempTaetigkeiten = [];
   let tempTemplates = [];
   let fileReadError = false;   // true = zuletzt gelesene Datei war beschädigt/ungültig -> Schreiben blockiert (Schutz vor Datenverlust)
@@ -2564,6 +2828,22 @@
   });
 
   // ---------- File I/O ----------
+  // Liest das gespeicherte "notizen"-Objekt ein und wandelt dabei ältere Dateien
+  // (Version 2.18.0: nur ein einzelnes Textfeld als "text") in das neue Format mit
+  // frei verschiebbaren Textfeldern um - ein bereits vorhandener Text landet dabei
+  // als erstes Textfeld an einer festen Startposition.
+  function parseNotizen(raw){
+    if(!raw || typeof raw !== 'object') return { drawing: null, textBoxes: [] };
+    const drawing = raw.drawing || null;
+    if(Array.isArray(raw.textBoxes)){
+      return { drawing, textBoxes: raw.textBoxes.filter(b => b && typeof b === 'object') };
+    }
+    if(typeof raw.text === 'string' && raw.text.trim()){
+      return { drawing, textBoxes: [{ id: genId(), x: 16, y: 16, width: 260, height: 140, text: raw.text }] };
+    }
+    return { drawing, textBoxes: [] };
+  }
+
   async function loadEntries(){
     const file = await fileHandle.getFile();
     let text = await file.text();
@@ -2590,10 +2870,12 @@
       entries = Array.isArray(parsed.entries) ? parsed.entries : [];
       drafts = Array.isArray(parsed.drafts) ? parsed.drafts : [];
       settings = parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : {};
+      notizen = parseNotizen(parsed.notizen);
     } else {
       entries = [];
       drafts = [];
       settings = {};
+      notizen = { drawing: null, textBoxes: [] };
     }
 
     let needsMigrationSave = false;
@@ -2624,6 +2906,7 @@
     applySavedColumnWidth();
     renderTable();
     renderDrafts();
+    syncNotizenUI();
 
     if(needsMigrationSave){
       try{ await saveEntries(); }catch(e){ console.warn('Migrations-Speichern fehlgeschlagen:', e); }
@@ -2631,7 +2914,7 @@
   }
   async function saveEntries(){
     const writable = await fileHandle.createWritable();
-    await writable.write(JSON.stringify({ settings, entries, drafts }, null, 2));
+    await writable.write(JSON.stringify({ settings, entries, drafts, notizen }, null, 2));
     await writable.close();
   }
 
@@ -3109,6 +3392,7 @@
     tempTemplates = Array.isArray(settings.templates) ? settings.templates.slice() : [];
     renderTemplatesList();
     el('customBgColor').value = customBgColor || getDefaultBgHex();
+    el('notizenEnabledCheckbox').checked = settings.notizenEnabled !== false; // Standard: aktiviert
     settingsOverlay.classList.add('visible');
   }
 
@@ -3136,13 +3420,14 @@
       const kuerzel = computeKuerzel(vorname, nachname);
       const taetigkeitenToSave = tempTaetigkeiten.slice();
       const templatesToSave = tempTemplates.slice();
+      const notizenEnabled = el('notizenEnabledCheckbox').checked;
 
       try{
         await loadEntries(); // aktuellsten Stand von der Platte holen, bevor überschrieben wird
       }catch(e){ /* mit aktuellem Stand weiterarbeiten */ }
 
       const backupSettings = settings;
-      settings = Object.assign({}, settings, { vorname, nachname, kuerzel, taetigkeiten: taetigkeitenToSave, templates: templatesToSave });
+      settings = Object.assign({}, settings, { vorname, nachname, kuerzel, taetigkeiten: taetigkeitenToSave, templates: templatesToSave, notizenEnabled });
 
       const ok = await safeSave();
       if(!ok){
@@ -3154,6 +3439,8 @@
       populateTaetigkeitSelect();
       populateTemplateSelect();
       renderSummary();
+      syncNotizenUI();
+      updateDraftsFabVisibility();
       settingsOverlay.classList.remove('visible');
       showToast('Einstellungen gespeichert!');
     }catch(e){
@@ -3262,6 +3549,29 @@
     }
   }
 
+  // Ordnet die Zeitspannen-Zeilen im Formular sichtbar nach "Von"-Zeit an. Läuft mit
+  // kurzer Verzögerung (statt sofort im change-Handler), damit die Enter-Taste-Logik
+  // ("neue Zeile anhängen, wenn man in der letzten Zeile ist") nicht durch ein
+  // gleichzeitiges Verschieben der Zeilen durcheinanderkommt. Reines Umsortieren im
+  // DOM verschiebt vorhandene Elemente, ohne den Fokus eines gerade bearbeiteten
+  // Feldes zu verlieren.
+  let zeitSortTimer = null;
+  function scheduleZeitRowSort(){
+    clearTimeout(zeitSortTimer);
+    zeitSortTimer = setTimeout(sortZeitRowsInDom, 50);
+  }
+  function sortZeitRowsInDom(){
+    const rows = Array.from(zeitenList.querySelectorAll('.zeit-row'));
+    const sorted = rows.slice().sort((a, b) => {
+      const vonA = a.querySelector('.zeit-von').value || '99:99';
+      const vonB = b.querySelector('.zeit-von').value || '99:99';
+      return vonA.localeCompare(vonB);
+    });
+    const alreadySorted = rows.every((row, i) => row === sorted[i]);
+    if(alreadySorted) return; // nichts zu tun - vermeidet unnötiges Neuanhängen
+    sorted.forEach(row => zeitenList.appendChild(row));
+  }
+
   function addZeitRow(von, bis){
     von = von || '';
     bis = bis || '';
@@ -3292,6 +3602,7 @@
     function handleZeitChange(){
       updateRowWarning(row);
       recalcEffektivFromZeiten();
+      scheduleZeitRowSort();
     }
     bisInput.addEventListener('change', handleZeitChange);
     vonInput.addEventListener('change', handleZeitChange);
@@ -3352,6 +3663,11 @@
         result.push({von, bis});
       }
     });
+    // Mehrere Zeitspannen chronologisch sortieren (nach "Von"-Zeit), damit sie überall
+    // - Fließtext, Bericht, erneutes Bearbeiten - in der richtigen Reihenfolge stehen,
+    // unabhängig davon, in welcher Reihenfolge sie im Formular eingetragen wurden.
+    // Zeilen ohne "Von"-Zeit landen ans Ende, ihre Reihenfolge untereinander bleibt dabei erhalten.
+    result.sort((a, b) => (a.von || '99:99').localeCompare(b.von || '99:99'));
     return result;
   }
 
@@ -3474,6 +3790,10 @@
   let pipWindow = null;
 
   el('miniWindowBtn').addEventListener('click', async ()=>{
+    if(pipWindow && pinnedNoteBoxId){
+      alert('Es kann immer nur ein Mini-Fenster gleichzeitig geöffnet sein – bitte zuerst die angepinnte Notiz schließen.');
+      return;
+    }
     if(pipWindow){
       pipWindow.close();
       return;
@@ -3753,9 +4073,21 @@
     return 'Ohne Titel';
   }
 
+  // Schwebender Button unten rechts: sichtbar, wenn es Entwürfe gibt ODER der
+  // Notizzettel aktiviert ist (sonst wären aktivierte Notizen ohne offene Entwürfe
+  // gar nicht erreichbar). Die Zahl im Button zeigt weiterhin nur die Entwürfe.
+  function updateDraftsFabVisibility(){
+    const hasDrafts = drafts.length > 0;
+    const notizenOn = settings.notizenEnabled !== false;
+    el('draftsFab').classList.toggle('visible', hasDrafts || notizenOn);
+    el('draftsFabCount').style.display = hasDrafts ? '' : 'none';
+    el('draftsFabCount').textContent = String(drafts.length);
+  }
+
   function renderDrafts(){
     const n = drafts.length;
     el('draftsCountBadge').textContent = `${n} Entwurf${n === 1 ? '' : 'e'}`;
+    updateDraftsFabVisibility();
 
     const list = el('draftsList');
     if(n === 0){
@@ -3783,6 +4115,8 @@
   function enterDraftEditMode(draft){
     if(editingEntryId) exitEditMode(); // nicht gleichzeitig Eintrag UND Entwurf bearbeiten
     editingDraftId = draft.id;
+
+    el('draftsOverlay').classList.remove('visible'); // Panel schließen, damit das Formular sichtbar wird
 
     el('datum').value = draft.datum || '';
 
@@ -3872,6 +4206,559 @@
     }
   });
 
+  // ---------- Schwebender Entwürfe-Button (öffnet/schließt das Entwürfe-Panel) ----------
+  el('draftsFab').addEventListener('click', ()=>{
+    el('draftsOverlay').classList.add('visible');
+  });
+  // Voller Schließen-Vorgang: Panel zu UND Vollbild-Zustand zurücksetzen, damit es
+  // beim nächsten Öffnen wieder normal (klein) startet. Wird sowohl vom großen
+  // "Schließen"-Button (normaler Modus) als auch vom kleinen ✕ (Vollbild) genutzt.
+  function closeDraftsOverlay(){
+    el('draftsOverlay').classList.remove('visible');
+    setDraftsFullscreen(false);
+  }
+  el('draftsOverlayCloseBtn').addEventListener('click', closeDraftsOverlay);
+  el('draftsCloseXBtn').addEventListener('click', closeDraftsOverlay);
+  // "Kurz zur Zeiterfassung": blendet das Panel nur aus, OHNE den Vollbild-Zustand zu
+  // verwerfen - ein erneuter Klick auf den schwebenden Button (📝) springt direkt
+  // wieder zurück ins Vollbild, genau wie zuvor verlassen (Tab, Zeichnung etc. bleiben).
+  el('draftsPeekBtn').addEventListener('click', ()=>{
+    el('draftsOverlay').classList.remove('visible');
+  });
+
+  // ---------- Vollbild-Modus des Entwürfe-Panels (unterhalb des Headers) ----------
+  // Der Header ist sticky und kann je nach Fensterbreite umbrechen (unterschiedliche
+  // Höhe) - deshalb wird die Höhe live gemessen statt fest verdrahtet.
+  function updateDraftsOverlayTopOffset(){
+    if(!el('draftsOverlay').classList.contains('drafts-fullscreen')) return;
+    const header = document.querySelector('header');
+    const headerH = header ? header.getBoundingClientRect().height : 0;
+    el('draftsOverlay').style.top = headerH + 'px';
+  }
+  function setDraftsFullscreen(on){
+    el('draftsOverlay').classList.toggle('drafts-fullscreen', on);
+    el('draftsFullscreenBtn').textContent = on ? '🗗' : '⛶';
+    el('draftsFullscreenBtn').title = on ? 'Vollbild verlassen' : 'Vollbild (unterhalb des Headers)';
+    // Im Vollbild ersetzen der kleine "Zeiterfassung"-Sprung und das ✕ oben den
+    // großen "Schließen"-Button unten, der dort unnötig viel Platz wegnehmen würde.
+    el('draftsPeekBtn').style.display = on ? '' : 'none';
+    el('draftsCloseXBtn').style.display = on ? '' : 'none';
+    el('draftsOverlayActions').style.display = on ? 'none' : '';
+    if(on){
+      updateDraftsOverlayTopOffset();
+      window.addEventListener('resize', updateDraftsOverlayTopOffset);
+    } else {
+      el('draftsOverlay').style.top = '';
+      window.removeEventListener('resize', updateDraftsOverlayTopOffset);
+    }
+    // Die Zeichenfläche hat jetzt eine andere Größe -> beim nächsten Anzeigen neu einmessen.
+    notizenCanvasSized = false;
+    if(el('notizenTabPane').style.display !== 'none'){
+      requestAnimationFrame(()=> ensureNotizenCanvasSized());
+    }
+  }
+  el('draftsFullscreenBtn').addEventListener('click', ()=>{
+    setDraftsFullscreen(!el('draftsOverlay').classList.contains('drafts-fullscreen'));
+  });
+
+  // ---------- Notizzettel (Zeichnung + frei platzierbare Textfelder) im Entwürfe-Panel ----------
+  // Optional per Einstellungen an-/abschaltbar (settings.notizenEnabled). Zeichnung und
+  // Textfelder werden zusammen mit den restlichen Daten in derselben Datei gespeichert
+  // (Feld "notizen" auf oberster Ebene, siehe loadEntries/saveEntries).
+  let notizenCanvasSized = false;
+  let isDrawingNotizen = false;
+  let lastNotizenPoint = null;
+  let notizenEraserActive = false;
+  let notizenSaveTimer = null;
+  let activeNotizenEditor = null; // zuletzt fokussiertes Textfeld - Ziel der Formatierungs-Buttons
+  let lastNotizenSelectionRange = null; // gemerkte Textauswahl, da Klicks auf <select> den Fokus stehlen
+  let pinnedNoteBoxId = null; // id des Textfelds, das gerade in einem eigenen Mini-Fenster offen ist
+  let notizenTool = 'text'; // 'draw' | 'text' - bestimmt, was ein Klick/Zug auf der Fläche auslöst
+
+  function setDraftsPanelTab(tab){ // 'drafts' | 'notizen'
+    const isNotizen = tab === 'notizen';
+    el('draftsTabBtn').classList.toggle('active', !isNotizen);
+    el('notizenTabBtn').classList.toggle('active', isNotizen);
+    el('draftsTabPane').style.display = isNotizen ? 'none' : '';
+    el('notizenTabPane').style.display = isNotizen ? 'flex' : 'none';
+    if(isNotizen){
+      // Erst nach dem Umschalten sizen, sonst liefert getBoundingClientRect noch die
+      // Maße von vorher (Element war eben noch display:none -> Breite 0).
+      requestAnimationFrame(()=> ensureNotizenCanvasSized());
+    }
+  }
+  el('draftsTabBtn').addEventListener('click', ()=> setDraftsPanelTab('drafts'));
+  el('notizenTabBtn').addEventListener('click', ()=> setDraftsPanelTab('notizen'));
+
+  // Wechselt das Werkzeug auf der gemeinsamen Fläche - Zeichnen oder Text. Beide
+  // wirken auf denselben Bereich (wie in OneNote): im Zeichnen-Modus zieht man
+  // Striche, im Text-Modus erzeugt ein Klick ein neues, frei verschiebbares Textfeld
+  // an der Klickposition.
+  function setNotizenTool(tool){
+    notizenTool = tool;
+    el('notizenToolDrawBtn').classList.toggle('active', tool === 'draw');
+    el('notizenToolTextBtn').classList.toggle('active', tool === 'text');
+    el('notizenCanvasWrap').classList.toggle('tool-draw', tool === 'draw');
+    el('notizenCanvasWrap').classList.toggle('tool-text', tool === 'text');
+    el('notizenDrawToolbar').style.display = tool === 'draw' ? '' : 'none';
+    el('notizenTextToolbar').style.display = tool === 'text' ? '' : 'none';
+  }
+  el('notizenToolDrawBtn').addEventListener('click', ()=> setNotizenTool('draw'));
+  el('notizenToolTextBtn').addEventListener('click', ()=> setNotizenTool('text'));
+
+  // Blendet den Notizzettel-Tab je nach Einstellung ein/aus und baut die Textfelder
+  // neu auf. Wird nach jedem Laden der Datei sowie nach dem Speichern der
+  // Einstellungen aufgerufen.
+  function syncNotizenUI(){
+    const enabled = settings.notizenEnabled !== false; // Standard: aktiviert
+    el('draftsPanelTabs').style.display = enabled ? 'flex' : 'none';
+    if(!enabled){
+      setDraftsPanelTab('drafts'); // deaktiviert -> immer auf die Entwürfe-Ansicht zurückfallen
+    }
+    renderNotizenTextBoxes();
+    notizenCanvasSized = false; // beim nächsten Öffnen neu berechnen (z.B. nach Datei-Wechsel)
+  }
+
+  // Größe des Zeichenbereichs an die tatsächlich verfügbare Breite anpassen und dabei
+  // scharf auf hochauflösenden Displays zeichnen (devicePixelRatio-Transformation).
+  // Wird beim Öffnen des Notizzettel-Tabs aufgerufen; eine bereits gespeicherte
+  // Skizze wird danach passend eingezeichnet.
+  function ensureNotizenCanvasSized(){
+    const canvas = el('notizenCanvas');
+    const rect = canvas.getBoundingClientRect();
+    if(rect.width === 0) return; // noch nicht sichtbar - beim nächsten Öffnen erneut versuchen
+    if(notizenCanvasSized) return;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = Math.round(rect.width);
+    const cssH = Math.round(rect.height) || 280;
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // ab hier in normalen CSS-Pixeln zeichnen
+    notizenCanvasSized = true;
+    if(notizen.drawing){
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, cssW, cssH);
+      img.src = notizen.drawing;
+    }
+  }
+
+  function getNotizenCanvasPoint(canvas, ev){
+    const rect = canvas.getBoundingClientRect();
+    return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+  }
+
+  function drawNotizenSegment(from, to){
+    const canvas = el('notizenCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Number(el('notizenBrushSize').value) || 3;
+    if(notizenEraserActive){
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.strokeStyle = 'rgba(0,0,0,1)'; // Farbe irrelevant bei destination-out
+    } else {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = el('notizenColorPicker').value || '#2563eb';
+    }
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+  }
+
+  const notizenCanvasEl = el('notizenCanvas');
+  notizenCanvasEl.addEventListener('pointerdown', (ev)=>{
+    if(notizenTool !== 'draw') return; // im Text-Werkzeug übernimmt der click-Handler unten
+    ensureNotizenCanvasSized();
+    notizenCanvasEl.setPointerCapture(ev.pointerId);
+    isDrawingNotizen = true;
+    lastNotizenPoint = getNotizenCanvasPoint(notizenCanvasEl, ev);
+    // Ein reiner Tap ohne Bewegung soll trotzdem einen sichtbaren Punkt hinterlassen.
+    drawNotizenSegment(lastNotizenPoint, { x: lastNotizenPoint.x + 0.01, y: lastNotizenPoint.y + 0.01 });
+  });
+  notizenCanvasEl.addEventListener('pointermove', (ev)=>{
+    if(!isDrawingNotizen) return;
+    const point = getNotizenCanvasPoint(notizenCanvasEl, ev);
+    drawNotizenSegment(lastNotizenPoint, point);
+    lastNotizenPoint = point;
+  });
+  function endNotizenStroke(ev){
+    if(!isDrawingNotizen) return;
+    isDrawingNotizen = false;
+    lastNotizenPoint = null;
+    try{ notizenCanvasEl.releasePointerCapture(ev.pointerId); }catch(e){ /* ggf. schon freigegeben */ }
+    notizen.drawing = notizenCanvasEl.toDataURL('image/png');
+    scheduleNotizenSave();
+  }
+  notizenCanvasEl.addEventListener('pointerup', endNotizenStroke);
+  notizenCanvasEl.addEventListener('pointerleave', endNotizenStroke);
+
+  // Im Text-Werkzeug erzeugt ein Klick auf die freie Fläche ein neues Textfeld genau
+  // dort (wie in OneNote). Klicks auf ein bestehendes Textfeld erreichen diesen
+  // Handler nicht, weil das Textfeld selbst das Klick-Ereignis abfängt (siehe
+  // renderNotizenTextBoxes: stopPropagation auf dem Textfeld).
+  notizenCanvasEl.addEventListener('click', (ev)=>{
+    if(notizenTool !== 'text') return;
+    const rect = el('notizenCanvasWrap').getBoundingClientRect();
+    createNotizenTextBoxAt(ev.clientX - rect.left, ev.clientY - rect.top);
+  });
+
+  el('notizenEraserBtn').addEventListener('click', ()=>{
+    notizenEraserActive = !notizenEraserActive;
+    el('notizenEraserBtn').classList.toggle('active', notizenEraserActive);
+  });
+  el('notizenClearBtn').addEventListener('click', ()=>{
+    if(!confirm('Zeichnung wirklich löschen? (Textfelder bleiben erhalten)')) return;
+    const ctx = notizenCanvasEl.getContext('2d');
+    ctx.clearRect(0, 0, notizenCanvasEl.width, notizenCanvasEl.height);
+    notizen.drawing = null; // komplett leer statt leerem PNG - hält die Datei kompakt
+    scheduleNotizenSave();
+  });
+
+  // ---------- Formatierung der Textfelder (Fett/Kursiv/Unterstrichen, Schriftart/-größe) ----------
+  // Merkt sich laufend die aktuelle Textauswahl innerhalb eines Notizzettel-Textfelds.
+  // Wird gebraucht, weil ein Klick auf ein <select> (Schriftart/-größe) den Fokus aus
+  // dem Textfeld herausnimmt und damit die Auswahl "vergisst" - wir stellen sie vor
+  // dem Anwenden des Befehls einfach wieder her.
+  document.addEventListener('selectionchange', ()=>{
+    const sel = window.getSelection();
+    if(!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    const container = node.nodeType === 3 ? node.parentElement : node;
+    if(container && container.closest && container.closest('.notizen-textbox-editor')){
+      lastNotizenSelectionRange = range.cloneRange();
+      // Buttons zeigen den Formatierungs-Zustand an der aktuellen Cursorposition an
+      // (z.B. gedrückt, wenn man gerade in fett geschriebenem Text steht).
+      try{
+        el('notizenBoldBtn').classList.toggle('active', document.queryCommandState('bold'));
+        el('notizenItalicBtn').classList.toggle('active', document.queryCommandState('italic'));
+        el('notizenUnderlineBtn').classList.toggle('active', document.queryCommandState('underline'));
+      }catch(e){ /* queryCommandState kann in seltenen Fällen werfen - dann einfach ignorieren */ }
+    }
+  });
+
+  function restoreNotizenSelection(){
+    if(!lastNotizenSelectionRange) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(lastNotizenSelectionRange);
+  }
+
+  // Wendet einen Formatierungsbefehl auf das zuletzt fokussierte Textfeld an und
+  // übernimmt das Ergebnis sofort in die Daten (für den Autosave).
+  function applyNotizenFormat(command, value){
+    if(!activeNotizenEditor) return;
+    activeNotizenEditor.focus();
+    restoreNotizenSelection();
+    document.execCommand(command, false, value || null);
+    const box = activeNotizenEditor._notizenBox;
+    if(box){
+      box.html = activeNotizenEditor.innerHTML;
+      scheduleNotizenSave();
+    }
+  }
+
+  // mousedown statt click + preventDefault, damit der Button dem Textfeld nicht
+  // vorher den Fokus (und damit die Auswahl) wegnimmt.
+  function wireNotizenFormatButton(btnId, command){
+    const btn = el(btnId);
+    btn.addEventListener('mousedown', (ev)=> ev.preventDefault());
+    btn.addEventListener('click', ()=> applyNotizenFormat(command));
+  }
+  wireNotizenFormatButton('notizenBoldBtn', 'bold');
+  wireNotizenFormatButton('notizenItalicBtn', 'italic');
+  wireNotizenFormatButton('notizenUnderlineBtn', 'underline');
+
+  el('notizenFontFamily').addEventListener('change', (ev)=>{
+    if(ev.target.value) applyNotizenFormat('fontName', ev.target.value);
+  });
+  el('notizenFontSize').addEventListener('change', (ev)=>{
+    applyNotizenFormat('fontSize', ev.target.value);
+  });
+
+  // Baut die Textfeld-Ebene komplett aus notizen.textBoxes neu auf. Wird nach jeder
+  // Änderung (neu, gelöscht, Datei neu geladen, an-/abgepinnt) aufgerufen.
+  function renderNotizenTextBoxes(){
+    const layer = el('notizenTextBoxLayer');
+    layer.innerHTML = '';
+    (notizen.textBoxes || []).forEach(box=>{
+      const boxEl = document.createElement('div');
+      boxEl.className = 'notizen-textbox';
+      boxEl.style.left = (box.x || 0) + 'px';
+      boxEl.style.top = (box.y || 0) + 'px';
+      boxEl.style.width = (box.width || 220) + 'px';
+      boxEl.style.height = (box.height || 100) + 'px';
+      // Klicks/Züge auf ein bestehendes Textfeld dürfen nicht als "neues Textfeld
+      // hier erzeugen" beim darunterliegenden Canvas ankommen.
+      boxEl.addEventListener('click', (ev)=> ev.stopPropagation());
+
+      const handle = document.createElement('div');
+      handle.className = 'notizen-textbox-handle';
+
+      // Ist dieses Textfeld gerade in einem eigenen Mini-Fenster angepinnt, zeigen
+      // wir hier nur einen Platzhalter mit "Zurückholen"-Button statt der Bearbeitung -
+      // sonst könnte man versehentlich an zwei Stellen gleichzeitig tippen.
+      if(box.id === pinnedNoteBoxId){
+        boxEl.classList.add('notizen-textbox-pinned-placeholder');
+        const delBtnPinned = document.createElement('button');
+        delBtnPinned.type = 'button';
+        delBtnPinned.className = 'notizen-textbox-delete';
+        delBtnPinned.textContent = '✕';
+        delBtnPinned.title = 'Textfeld löschen';
+        delBtnPinned.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          if(pipWindow) pipWindow.close(); // eigenes Fenster zuerst schließen
+          notizen.textBoxes = notizen.textBoxes.filter(b => b.id !== box.id);
+          renderNotizenTextBoxes();
+          scheduleNotizenSave();
+        });
+        handle.appendChild(delBtnPinned);
+        attachNotizenTextBoxDrag(handle, boxEl, box);
+
+        const hint = document.createElement('div');
+        hint.className = 'notizen-pinned-hint';
+        const backBtn = document.createElement('button');
+        backBtn.type = 'button';
+        backBtn.className = 'btn-ghost';
+        backBtn.textContent = '◱ Zurückholen';
+        backBtn.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          if(pipWindow) pipWindow.close();
+        });
+        hint.innerHTML = '📌 In eigenem Fenster geöffnet<br>';
+        hint.appendChild(backBtn);
+
+        const resizeHandlePinned = document.createElement('div');
+        resizeHandlePinned.className = 'notizen-textbox-resize';
+        resizeHandlePinned.title = 'Größe ändern';
+        attachNotizenTextBoxResize(resizeHandlePinned, boxEl, box);
+
+        boxEl.appendChild(handle);
+        boxEl.appendChild(hint);
+        boxEl.appendChild(resizeHandlePinned);
+        layer.appendChild(boxEl);
+        return;
+      }
+
+      const pinBtn = document.createElement('button');
+      pinBtn.type = 'button';
+      pinBtn.className = 'notizen-textbox-pin';
+      pinBtn.textContent = '📌';
+      pinBtn.title = 'In eigenes Fenster anpinnen (immer im Vordergrund)';
+      pinBtn.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        openNoteTextBoxPip(box);
+      });
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'notizen-textbox-delete';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Textfeld löschen';
+      delBtn.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        notizen.textBoxes = notizen.textBoxes.filter(b => b.id !== box.id);
+        renderNotizenTextBoxes();
+        scheduleNotizenSave();
+      });
+      handle.appendChild(pinBtn);
+      handle.appendChild(delBtn);
+      attachNotizenTextBoxDrag(handle, boxEl, box);
+
+      // Contenteditable statt textarea, damit sich Fett/Kursiv/Unterstrichen sowie
+      // Schriftart/-größe (siehe Formatierungs-Toolbar) anwenden lassen - eine
+      // einfache textarea kann nur reinen, unformatierten Text darstellen.
+      const editor = document.createElement('div');
+      editor.className = 'notizen-textbox-editor';
+      editor.contentEditable = 'true';
+      editor.setAttribute('data-placeholder', 'Text …');
+      editor.innerHTML = box.html != null ? box.html : escapeHtml(box.text || '');
+      editor._notizenBox = box; // Referenz für die Formatierungs-Buttons (siehe applyNotizenFormat)
+      editor.addEventListener('pointerdown', (ev)=> ev.stopPropagation());
+      editor.addEventListener('focus', ()=>{ activeNotizenEditor = editor; });
+      editor.addEventListener('input', ()=>{
+        box.html = editor.innerHTML;
+        scheduleNotizenSave();
+      });
+
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'notizen-textbox-resize';
+      resizeHandle.title = 'Größe ändern';
+      attachNotizenTextBoxResize(resizeHandle, boxEl, box);
+
+      boxEl.appendChild(handle);
+      boxEl.appendChild(editor);
+      boxEl.appendChild(resizeHandle);
+      layer.appendChild(boxEl);
+    });
+  }
+
+  // Zieht ein Textfeld per Ziehgriff (die schmale Leiste oben) frei auf der Fläche
+  // umher; die Position wird erst beim Loslassen gespeichert.
+  function attachNotizenTextBoxDrag(handleEl, boxEl, box){
+    handleEl.addEventListener('pointerdown', (ev)=>{
+      // Klicks auf Löschen- oder Pin-Button nicht als Ziehstart behandeln, sonst
+      // unterdrückt preventDefault() das nachfolgende click-Ereignis auf dem Button
+      // (er läge sonst "tot", ohne Fehlermeldung - der Löschen-Button hatte genau
+      // diesen Fehler bereits einmal).
+      if(ev.target.closest('.notizen-textbox-delete, .notizen-textbox-pin')) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      const wrapRect = el('notizenCanvasWrap').getBoundingClientRect();
+      const startX = ev.clientX;
+      const startY = ev.clientY;
+      const origX = box.x || 0;
+      const origY = box.y || 0;
+      handleEl.setPointerCapture(ev.pointerId);
+      function onMove(mv){
+        let newX = origX + (mv.clientX - startX);
+        let newY = origY + (mv.clientY - startY);
+        newX = Math.max(0, Math.min(newX, wrapRect.width - 40));
+        newY = Math.max(0, Math.min(newY, wrapRect.height - 20));
+        box.x = newX;
+        box.y = newY;
+        boxEl.style.left = newX + 'px';
+        boxEl.style.top = newY + 'px';
+      }
+      function onUp(){
+        handleEl.removeEventListener('pointermove', onMove);
+        handleEl.removeEventListener('pointerup', onUp);
+        scheduleNotizenSave();
+      }
+      handleEl.addEventListener('pointermove', onMove);
+      handleEl.addEventListener('pointerup', onUp);
+    });
+  }
+
+  // Zieht den Griff unten rechts, um Breite/Höhe eines Textfelds manuell anzupassen.
+  function attachNotizenTextBoxResize(resizeEl, boxEl, box){
+    resizeEl.addEventListener('pointerdown', (ev)=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      const wrapRect = el('notizenCanvasWrap').getBoundingClientRect();
+      const startX = ev.clientX;
+      const startY = ev.clientY;
+      const origW = box.width || 220;
+      const origH = box.height || 100;
+      resizeEl.setPointerCapture(ev.pointerId);
+      function onMove(mv){
+        const maxW = wrapRect.width - (box.x || 0);
+        const maxH = wrapRect.height - (box.y || 0);
+        let newW = origW + (mv.clientX - startX);
+        let newH = origH + (mv.clientY - startY);
+        newW = Math.max(130, Math.min(newW, maxW));
+        newH = Math.max(60, Math.min(newH, maxH));
+        box.width = newW;
+        box.height = newH;
+        boxEl.style.width = newW + 'px';
+        boxEl.style.height = newH + 'px';
+      }
+      function onUp(){
+        resizeEl.removeEventListener('pointermove', onMove);
+        resizeEl.removeEventListener('pointerup', onUp);
+        scheduleNotizenSave();
+      }
+      resizeEl.addEventListener('pointermove', onMove);
+      resizeEl.addEventListener('pointerup', onUp);
+    });
+  }
+
+  // Legt ein neues, leeres Textfeld an der angegebenen Position an und fokussiert
+  // es direkt, damit sofort losgetippt werden kann.
+  function createNotizenTextBoxAt(x, y){
+    const box = { id: genId(), x: Math.max(0, x - 10), y: Math.max(0, y - 8), width: 220, height: 100, html: '' };
+    notizen.textBoxes = notizen.textBoxes || [];
+    notizen.textBoxes.push(box);
+    renderNotizenTextBoxes();
+    scheduleNotizenSave();
+    requestAnimationFrame(()=>{
+      const boxEls = el('notizenTextBoxLayer').querySelectorAll('.notizen-textbox');
+      const lastEl = boxEls[boxEls.length - 1];
+      if(lastEl){
+        const editor = lastEl.querySelector('.notizen-textbox-editor');
+        if(editor) editor.focus();
+      }
+    });
+  }
+
+  // Pinnt ein einzelnes Textfeld als eigenes, immer im Vordergrund schwebendes
+  // Fenster an (Document Picture-in-Picture) - genau wie der Mini-Timer. Da der
+  // Browser immer nur ein PiP-Fenster pro Tab erlaubt, wird geprüft, ob nicht schon
+  // eines offen ist (Timer oder eine andere Notiz), statt es versehentlich zu ersetzen.
+  // Statt das DOM-Element wie beim Timer zu verschieben, bekommt das PiP-Fenster einen
+  // eigenen, schlanken Editor, der direkt auf demselben Datenobjekt (box) arbeitet -
+  // im Hauptfenster bleibt an der Stelle nur ein Platzhalter mit "Zurückholen"-Button.
+  async function openNoteTextBoxPip(box){
+    if(pipWindow){
+      alert('Es kann immer nur ein Mini-Fenster gleichzeitig geöffnet sein – bitte zuerst das andere schließen.');
+      return;
+    }
+    if(!('documentPictureInPicture' in window)){
+      alert('Diese Funktion benötigt eine aktuelle Version von Google Chrome oder Microsoft Edge (Document Picture-in-Picture wird von deinem Browser noch nicht unterstützt).');
+      return;
+    }
+    try{
+      pipWindow = await window.documentPictureInPicture.requestWindow({ width: 320, height: 260 });
+
+      document.querySelectorAll('style').forEach(styleTag=>{
+        pipWindow.document.head.appendChild(styleTag.cloneNode(true));
+      });
+      const theme = document.documentElement.getAttribute('data-theme');
+      if(theme) pipWindow.document.documentElement.setAttribute('data-theme', theme);
+      const customBg = document.documentElement.style.getPropertyValue('--bg');
+      if(customBg) pipWindow.document.documentElement.style.setProperty('--bg', customBg);
+      pipWindow.document.body.style.margin = '0';
+      pipWindow.document.body.style.background = 'var(--bg)';
+      pipWindow.document.title = 'Chronos – Notiz';
+
+      pinnedNoteBoxId = box.id;
+
+      const wrap = pipWindow.document.createElement('div');
+      wrap.className = 'notizen-pip-editor-wrap';
+      const editor = pipWindow.document.createElement('div');
+      editor.className = 'notizen-textbox-editor notizen-pip-editor';
+      editor.contentEditable = 'true';
+      editor.innerHTML = box.html != null ? box.html : escapeHtml(box.text || '');
+      editor.addEventListener('input', ()=>{
+        box.html = editor.innerHTML;
+        scheduleNotizenSave();
+      });
+      wrap.appendChild(editor);
+      pipWindow.document.body.appendChild(wrap);
+      editor.focus();
+
+      renderNotizenTextBoxes(); // Platzhalter im Hauptfenster einblenden
+
+      pipWindow.addEventListener('pagehide', ()=>{
+        pipWindow = null;
+        pinnedNoteBoxId = null;
+        renderNotizenTextBoxes(); // normale Bearbeitung im Hauptfenster wiederherstellen
+      });
+    }catch(e){
+      pipWindow = null;
+      pinnedNoteBoxId = null;
+      reportUnexpectedError('Notiz anpinnen', e);
+    }
+  }
+
+  // Speichert Zeichnung/Textfelder gebündelt und mit kurzer Verzögerung, statt bei
+  // jedem Tastendruck bzw. jeder Mausbewegung einzeln zu schreiben.
+  function scheduleNotizenSave(){
+    clearTimeout(notizenSaveTimer);
+    notizenSaveTimer = setTimeout(async ()=>{
+      const ok = await safeSave();
+      const hint = el('notizenSaveHint');
+      if(ok){
+        hint.textContent = 'Gespeichert ✓';
+        clearTimeout(hint._fadeTimer);
+        hint._fadeTimer = setTimeout(()=>{ hint.textContent = ''; }, 2000);
+      } else {
+        hint.textContent = '';
+      }
+    }, 700);
+  }
+
   el('draftsList').addEventListener('click', async (ev)=>{
     const row = ev.target.closest('.draft-row');
     if(!row) return;
@@ -3911,6 +4798,8 @@
     }
 
     // Kein Aktions-Button getroffen -> vollständige Detail-Ansicht öffnen
+    // (Entwürfe-Panel vorher schließen, sonst läge es optisch über der Detail-Ansicht)
+    el('draftsOverlay').classList.remove('visible');
     openEntryDetail(draft, true);
   });
 
@@ -6153,6 +7042,7 @@
   // Angezeigte Versionsnummer aus der zentralen Konstante setzen (eine Quelle der Wahrheit)
   el('versionBadge').textContent = 'v' + APP_VERSION;
   el('aboutVersionText').textContent = APP_VERSION;
+  el('aboutLastChangedText').textContent = APP_LAST_CHANGED;
 
   // Wendet eine in der Datei gespeicherte Spaltenbreite an (falls vorhanden)
   function applySavedColumnWidth(){
